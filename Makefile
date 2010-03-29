@@ -17,7 +17,7 @@ ifdef PREFIX
 
 	@ echo -n "Copying etc..."
 	@ cp -f etc/init.php $(PREFIX)/etc/init.php
-	@ cp -f etc/eclipse/templates.xml $(PREFIX)/etc/eclipse/templates.xml
+#	@ cp -f etc/eclipse/templates.xml $(PREFIX)/etc/eclipse/templates.xml
 	@echo "ok"
 
 	@ echo -n "Generating php-tao..."
@@ -33,7 +33,7 @@ ifdef PREFIX
 	@ printf "#!/bin/sh\n$(PREFIX)/bin/tao-run Dev.Source.Diagram \$$@" > $(PREFIX)/bin/tao-source-diagram
 	@ printf "#!/bin/sh\n$(PREFIX)/bin/tao-run Dev.Unit.Text \$$@" > $(PREFIX)/bin/tao-test
 	@ printf "#!/bin/sh\n$(PREFIX)/bin/tao-run Dev.DB.Diagram \$$@" > $(PREFIX)/bin/tao-db-diagram
-	@ cp -f bin/tao-stages $(PREFIX)/bin/tao-stages
+#	@ cp -f bin/tao-stages $(PREFIX)/bin/tao-stages
 	@ find  $(PREFIX)/bin -type f | xargs chmod +x
 	@ echo "ok"
 
