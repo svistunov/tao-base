@@ -262,7 +262,13 @@ class Templates_HTML_Template
 ///     </args>
 ///     <body>
   public function partial($__name, $__params = array()) {
-    extract(array_merge($this->get_parms(), $__params));
+#    extract(array_merge($this->get_parms(), $__params));
+
+  $args = func_get_args();
+  array_shift($args);
+  foreach ($this->get_parms() as $__k => $__v) $$__k = $__v;
+
+  foreach (Core::normalize_args($args) as $__k => $__v) if (!is_numeric($__k)) $$__k = $__v;
 
     if (IO_FS::exists($__path = $this->get_partial_path($__name))) {
        ob_start();
