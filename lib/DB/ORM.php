@@ -1,5 +1,5 @@
 <?php
-/// <module name="DB.ORM" version="0.2.0" maintainer="timokhin@techart.ru ">
+/// <module name="DB.ORM" version="0.2.1" maintainer="timokhin@techart.ru ">
 ///   <brief>Объектно-ориентированный интерфейс к реляционной базе данных</brief>
 Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 
@@ -8,7 +8,7 @@ Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 ///   <brief>Модуль DB.ORM</brief>
 class DB_ORM implements Core_ModuleInterface {
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -2576,10 +2576,14 @@ abstract class DB_ORM_Entity
 ///     </args>
 ///     <body>
   public function offsetGet($index) {
-    if (method_exists($this, $name = "row_get_$index"))
-      return $this->$name();
-    else
-      return $this->attrs[(string) $index];
+    switch (true) {
+      case method_exists($this, $name = "row_get_$index"):
+        return $this->$name();
+      case $index === '__class':
+        return Core_Types::real_class_name_for($this);
+      default:
+        return $this->attrs[(string) $index];
+    }
   }
 ///     </body>
 ///   </method>
@@ -2591,10 +2595,15 @@ abstract class DB_ORM_Entity
 ///     </args>
 ///     <body>
   public function offsetSet($index, $value) {
-    if (method_exists($this, $name = "row_set_$index"))
-      $this->$name($value);
-    else
-      $this->attrs[(string) $index] = $value;
+    switch (true) {
+      case method_exists($this, $name = "row_set_$index"):
+        $this->$name($value);
+        break;
+      case $index === '__class':
+        break;
+      default:
+        $this->attrs[(string) $index] = $value;
+    }
     return $this;
   }
 ///     </body>
@@ -2714,22 +2723,6 @@ abstract class DB_ORM_Entity
     $this->__set($method, $args[0]);
     return $this;
   }
-///     </body>
-///   </method>
-
-///   </protocol>
-
-///   <protocol name="supporting">
-
-///   <method name="row_set_type" returns="string">
-///     <body>
-  protected function row_set_type($value) { return Core_Types::real_class_name_for($this); }
-///     </body>
-///   </method>
-
-///   <method name="row_get_type" returns="string">
-///     <body>
-    protected function row_get_type() { return Core_Types::real_class_name_for($this); }
 ///     </body>
 ///   </method>
 
