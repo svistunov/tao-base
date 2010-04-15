@@ -1,5 +1,5 @@
 <?php
-/// <module name="Core" version="0.2.10" maintainer="timokhin@techart.ru">
+/// <module name="Core" version="0.2.11" maintainer="timokhin@techart.ru">
 /// <brief>Загрузчик модулей и вспомогательные утилиты.</brief>
 /// <details>
 ///   <p>Модуль Core реализует стандартный механизм динамической подгрузки  остальных модулей
@@ -124,7 +124,7 @@ class Core implements Core_ModuleInterface {
 
 ///   <constants>
   const MODULE        = 'Core';
-  const VERSION       = '0.2.10';
+  const VERSION       = '0.2.11';
   const RELEASE       =  10000;
   const PATH_VARIABLE = 'TAO_PATH';
 ///   </constants>
@@ -1456,10 +1456,9 @@ class Core_ModuleLoader {
           $name == '*' ?
             '{.+}' :
             '{^'.str_replace('.', '\.', $name).'}', $module))
-        $file =  $root.'/'.str_replace(
+        return   $root.'/'.str_replace(
           '.', '/',
           $drop_prefix ? preg_replace("{^$name.}", '', $module) : $module).'.php';
-        if (file_exists($file)) return $file;
     }
     throw new Core_ModuleNotFoundException($module);
   }
