@@ -1,5 +1,5 @@
 <?php
-/// <module name="Search.Sphinx.ORM" maintainer="svistunov@techart.ru" version="0.2.0">
+/// <module name="Search.Sphinx.ORM" maintainer="svistunov@techart.ru" version="0.2.1">
 ///   <brief>Модуль служит для связи Sphinx и SB.ORM</brief>
 Core::load('DB.ORM', 'Search.Sphinx');
 
@@ -8,7 +8,7 @@ Core::load('DB.ORM', 'Search.Sphinx');
 class Search_Sphinx_ORM implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -98,7 +98,9 @@ class Search_Sphinx_ORM_Resolver implements Search_Sphinx_ResolverInterface {
     foreach ($parts as $class_id => $ids) {
       $id_field = $this->mappers[$class_id]->options['key'][0];
 
-      foreach ($this->mappers[$class_id]->spawn()->where("$id_field IN (".implode(',', $ids).')') as $v)
+      foreach (
+        $this->mappers[$class_id]->spawn()->
+          where($this->mappers[$class_id]->options['table_prefix'].'.'.$id_field.' IN ('.implode(',', $ids).')') as $v)
         $result[$class_id + $v[$id_field]*$num_of_mappers] = $v;
     }
 
