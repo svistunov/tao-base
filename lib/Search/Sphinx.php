@@ -1,5 +1,5 @@
 <?php
-/// <module name="Search.Sphinx" version="0.2.0" maintainer="svistunov@techart.ru">
+/// <module name="Search.Sphinx" version="0.2.1" maintainer="svistunov@techart.ru">
 ///  <brief>Модуль предоставляющий интерфейс для доступа к полнотекстовому поисковому движку Sphinx</brief>
 ///  <details>
 ///   За болеее подробной информацией обращайтесь к <a href="http://www.sphinxsearch.com/docs/">документации Sphinx</a>
@@ -11,7 +11,7 @@ Core::load('Object');
 class Search_Sphinx implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
 ///   </constants>
 
   const DEFAULT_RANGE = 20;
@@ -139,7 +139,7 @@ class Search_Sphinx_Client {
 ///     </args>
 ///     <body>
   public function group_by($attribute, $func = SPH_GROUPBY_ATTR, $group_sort = '@group desc') {
-    return $this->catch_errors($this->client->SetGroupBy($attributes, $func, $group_sort) !== false);
+    return $this->catch_errors($this->client->SetGroupBy($attribute, $func, $group_sort) !== false);
   }
 ///     </body>
 ///   </method>
@@ -168,7 +168,7 @@ class Search_Sphinx_Client {
 ///     </args>
 ///     <body>
   public function where($attribute, $min, $max, $exclude = false) {
-    return $this->catch_errors($this->client->SetFilterRange($attributes, $min, $max, $exclude) !== false);
+    return $this->catch_errors($this->client->SetFilterRange($attribute, $min, $max, $exclude) !== false);
   }
 ///     </body>
 ///   </method>
@@ -258,10 +258,10 @@ class Search_Sphinx_Client {
 /// <class name="Search.Sphinx.Results">
 ///   <brief>Обертка над результатом поиска Sphinx</brief>
 class Search_Sphinx_Results
-implements Core_PropertyAccessInterface,
-IteratorAggregate,
-Core_CountInterface,
-Core_IndexedAccessInterface  {
+  implements Core_PropertyAccessInterface,
+             IteratorAggregate,
+             Core_CountInterface,
+             Core_IndexedAccessInterface  {
 
   protected $documents = array();
 
@@ -589,8 +589,8 @@ class Search_Sphinx_Query implements IteratorAggregate {
 ///       <arg name="exclude" type="boolean" default="false" brief="инвертирует поиск" />
 ///     </args>
 ///     <body>
-  public function filter($attributes, $values, $exclude = false) {
-    $this->options['filter'][] = array($attributes, $values, $exclude);
+  public function filter($attribute, $values, $exclude = false) {
+    $this->options['filter'][] = array($attribute, $values, $exclude);
     return $this;
   }
 ///     </body>
