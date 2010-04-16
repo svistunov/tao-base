@@ -1,5 +1,5 @@
 <?php
-/// <module name="DB.ORM" version="0.2.1" maintainer="timokhin@techart.ru ">
+/// <module name="DB.ORM" version="0.2.2" maintainer="timokhin@techart.ru ">
 ///   <brief>Объектно-ориентированный интерфейс к реляционной базе данных</brief>
 Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 
@@ -8,7 +8,7 @@ Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 ///   <brief>Модуль DB.ORM</brief>
 class DB_ORM implements Core_ModuleInterface {
 ///   <constants>
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -1254,7 +1254,7 @@ class DB_ORM_SQLMapper extends DB_ORM_Mapper
       ($this->make_cursor($this->sql()->update($m))->
         bind($e)->
         execute()->is_successful) &&
-      $this->callback($e, 'ater_update') && $this->callback($e, 'after_save');
+      $this->callback($e, 'after_update') && $this->callback($e, 'after_save');
   }
 ///     </body>
 ///   </method>
