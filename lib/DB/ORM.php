@@ -1,5 +1,5 @@
 <?php
-/// <module name="DB.ORM" version="0.2.2" maintainer="timokhin@techart.ru ">
+/// <module name="DB.ORM" version="0.2.4" maintainer="timokhin@techart.ru ">
 ///   <brief>Объектно-ориентированный интерфейс к реляционной базе данных</brief>
 Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 
@@ -8,7 +8,7 @@ Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 ///   <brief>Модуль DB.ORM</brief>
 class DB_ORM implements Core_ModuleInterface {
 ///   <constants>
-  const VERSION = '0.2.2';
+  const VERSION = '0.2.4';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -511,6 +511,7 @@ class DB_ORM_MappingOptions
         return $this->option($method, explode(' ', (string) $args[0]));
       case 'columns':
       case 'exclude':
+      case 'only':
       case 'key':
         foreach ((array) $args[0] as $v) $this->array_option($method, (string) $v);
         return $this;
@@ -578,6 +579,7 @@ class DB_ORM_MappingOptions
       case 'range':
       case 'index':
       case 'lookup_by':
+      case 'only':
         return $this->has_option($index) ?
           $this->options[$index] :
           ($parent ? $parent[$index] : null);
@@ -601,10 +603,16 @@ class DB_ORM_MappingOptions
       case 'result':
         $r = array();
         $t = $this['table'];
+
         foreach ($this['columns'] as $c)
           $r[$c] = (isset($t[1]) ? $t[1] : $t[0]).'.'.$c;
+
         foreach ($this['calculate'] as $k => $v) $r[$k] = $v;
+
+        if ($only = $this['only']) $r = array_intersect_key($r, array_flip($only));
+
         foreach ($this['exclude'] as $c) unset($r[$c]);
+
         return $r;
       default:
         throw new Core_MissingIndexedPropertyException($index);
@@ -647,6 +655,7 @@ class DB_ORM_MappingOptions
       case 'table_prefix':
       case 'result':
       case 'lookup_by':
+      case 'only':
         throw new Core_ReadOnlyIndexedPropertyException($index);
       default:
         throw new Core_MissingIndexedPropertyException($index);
@@ -683,6 +692,7 @@ class DB_ORM_MappingOptions
       case 'calculate':
       case 'exclude':
       case 'lookup_by':
+      case 'only':
         return $this->has_option($index) || ($this->parent && isset($this->parent[$index]));
       case 'aliased_table':
       case 'table_prefix':
@@ -725,6 +735,7 @@ class DB_ORM_MappingOptions
       case 'calculate':
       case 'exclude':
       case 'lookup_by':
+      case 'only':
         unset($this->options[$index]);
         break;
       case 'aliased_table':
@@ -1858,6 +1869,7 @@ class DB_ORM_SQLMapper extends DB_ORM_Mapper
         return $this;
       case 'key':
       case 'columns':
+      case 'only':
       case 'exclude':
         $this->is_immutable ?
           $this->spawn()->__call($method, $args) :
