@@ -1,5 +1,5 @@
 <?php
-/// <module name="Dev.Unit" version="0.2.4" maintainer="svistunov@techart.ru">
+/// <module name="Dev.Unit" version="0.2.5" maintainer="svistunov@techart.ru">
 ///   <brief>Простейший xUnit-подобный framework для написания тестов.</brief>
 ///   <details>
 ///     <p>Модуль построение по классической xUnit-архитектуре, описание которой легко найти в
@@ -28,7 +28,7 @@ Core::load('Object');
 class Dev_Unit implements Core_ConfigurableModuleInterface {
 
 ///   <constants>
-  const VERSION               = '0.2.4';
+  const VERSION               = '0.2.5';
   const TEST_METHOD_SIGNATURE = 'test_';
 ///   </constants>
 
@@ -1222,11 +1222,14 @@ abstract class Dev_Unit_AssertBundle {
 ///     <body>
     protected function stringify($object) {
       switch (true) {
-        case $object instanceof Core_StringifyInterface: return $object->as_string();
-        case Core_Types::is_object($object):
-          return sprintf('%s(%s)', Core_Types::class_name_for($object, true), spl_object_hash($object));
+        case $object instanceof Core_StringifyInterface:
+          return $object->as_string();
+        case $object instanceof ArrayObject:
+        case $object instanceof stdClass:
         default:
           return var_export($object, true);
+        case Core_Types::is_object($object):
+          return sprintf('%s(%s)', Core_Types::class_name_for($object, true), spl_object_hash($object));
       }
     }
 ///     </body>
