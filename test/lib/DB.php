@@ -1,5 +1,5 @@
 <?php
-// <module name="Test.DB" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.DB" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit.DB');
 
 /// <class name="Test.DB" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit.DB');
 class Test_DB implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
