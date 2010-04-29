@@ -1,12 +1,12 @@
 <?php
-/// <module name="Dev.Unit.Assert.Iterating" maintainer="svistunov@techart.ru" version="0.1.0">
+/// <module name="Dev.Unit.Assert.Iterating" maintainer="svistunov@techart.ru" version="0.1.1">
 
 /// <class name="Dev.Unit.Assert.Iterating">
 ///   <implements interface="Dev.Unit.AssertBundleModuleInterface" />
 class Dev_Unit_Assert_Iterating implements Dev_Unit_AssertBundleModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -33,7 +33,7 @@ class Dev_Unit_Assert_Iterating_Bundle extends Dev_Unit_AssertBundle {
 ///       <arg name="attrs"  type="array" />
 ///     </args>
 ///     <body>
-    public function assert_read($object, array $attrs) {
+    public function assert_read($object, $attrs) {
       foreach ($object as $k => $v) {
         if (!isset($attrs[$k]))
           throw new Dev_Unit_FailureException("failed: additional value in iterator for key '$k'");
