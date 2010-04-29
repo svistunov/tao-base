@@ -1,5 +1,5 @@
 <?php
-/// <module name="DB" version="0.2.1" maintainer="timokhin@techart.ru">
+/// <module name="DB" version="0.2.2" maintainer="timokhin@techart.ru">
 ///   <brief>Модуль предоставляет набор классов для работы с БД</brief>
 Core::load('Object', 'DB.Adapter');
 
@@ -9,7 +9,7 @@ Core::load('Object', 'DB.Adapter');
 class DB implements Core_ConfigurableModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
   const PLACEHOLDER_REGEXP = ':([a-zA-Z_][a-zA-Z_0-9]*)';
 ///   </constants>
 
@@ -109,8 +109,9 @@ class DB_CursorException extends DB_Exception {}
 ///       В этой строке обязательными являются type, host и database
 ///     </details>
 ///   <implements interface="Core.PropertyAccessInterface" />
+///   <implements interface="Core.StringifyInterface" />
 ///   <depends supplier="DB.ConnectionException" stereotype="throws" />
-class DB_DSN implements Core_PropertyAccessInterface {
+class DB_DSN implements Core_PropertyAccessInterface, Core_StringifyInterface {
 
   const FORMAT = '{^([^:/]+)://(?:(?:([^:@]+)(?::([^@]+))?@)?([^:/]+)?(?::(\d+))?/)?([^/]+)(/[^/]+)?$}';
 
@@ -158,7 +159,7 @@ class DB_DSN implements Core_PropertyAccessInterface {
         'host'     => $p[4],
         'port'     => $p[5],
         'database' => $p[6],
-        'scheme'   => $p[7],
+        'scheme'   => (string) $p[7],
         'parms'    => $parms));
     else
       throw new DB_ConnectionException("Bad DSN: $string");
@@ -260,8 +261,11 @@ class DB_DSN implements Core_PropertyAccessInterface {
       case 'port':
       case 'database':
       case 'scheme':
+        $this->$property = (string) $value;
+        return $this;
       case 'parms':
-        {$this->$property = (string) $value; return $this;}
+        $this->$property = (array) $value;
+        return $this;
       case 'pdo_string':
         throw new Core_ReadOnlyPropertyException($property);
       default:
