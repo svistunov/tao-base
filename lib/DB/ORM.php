@@ -1,5 +1,5 @@
 <?php
-/// <module name="DB.ORM" version="0.2.4" maintainer="timokhin@techart.ru ">
+/// <module name="DB.ORM" version="0.2.5" maintainer="timokhin@techart.ru ">
 ///   <brief>Объектно-ориентированный интерфейс к реляционной базе данных</brief>
 Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 
@@ -8,7 +8,7 @@ Core::load('DB.ORM.SQL', 'DB', 'Data.Pagination', 'Validation', 'Object');
 ///   <brief>Модуль DB.ORM</brief>
 class DB_ORM implements Core_ModuleInterface {
 ///   <constants>
-  const VERSION = '0.2.4';
+  const VERSION = '0.2.5';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -2508,6 +2508,8 @@ interface DB_ORM_AttrEntityInterface extends DB_ORM_EntityInterface, Object_Attr
 
 /// <class name="DB.ORM.Entity" stereotype="abstract">
 ///   <implements interface="Core.PropertyAccessInterface" />
+///   <implements interface="Core.CallInterface" />
+///   <implements interface="IteratorAggregate" />
 ///   <brief>Базовый класс объектов бизнес-логики</brief>
 ///   <details>
 ///     <p>Все объекты бизнес логики удобнее всего наследовать именно от этого класса.</p>
@@ -2529,7 +2531,7 @@ interface DB_ORM_AttrEntityInterface extends DB_ORM_EntityInterface, Object_Attr
 ///        добавлять в него дополнительные поля.</p>
 ///   </details>
 abstract class DB_ORM_Entity
-  implements DB_ORM_EntityInterface, Core_CallInterface {
+  implements DB_ORM_EntityInterface, Core_CallInterface, IteratorAggregate {
 
   protected $attrs = array();
 
@@ -2739,6 +2741,18 @@ abstract class DB_ORM_Entity
 ///   </method>
 
 ///   </protocol>
+
+/// <protocol name="iterating">
+
+///   <method name="db" returns="Iterator">
+///     <body>
+  public function getIterator() {
+    return new ArrayIterator($this->attrs);
+  }
+///     </body>
+///   </method>
+
+/// </protocol>
 }
 /// </class>
 
