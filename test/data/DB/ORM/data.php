@@ -19,42 +19,42 @@ $data = array(
       )),
 
     "postings" => Core::hash(array(
-      1 => Test_DB_ORM_Blog::Posting(array(
+      Test_DB_ORM_Blog::Posting(array(
         'id' => 1,
         'user_id' => 1,
         'title' => 'Ubuntu 8.10',
         'body' => 'Вышла новая версия Ubuntu',
         'published_at' => Time::parse('2008-9-30 9:15:56')
       )),
-      2 => Test_DB_ORM_Blog::Posting(array(
+      Test_DB_ORM_Blog::Posting(array(
         'id' => 2,
         'user_id' => 2,
         'title' => 'Основные команды Linux',
         'body' => 'На сегоднешний день ...',
         'published_at' => Time::parse('1971-1-20 6:00:00')
       )),
-      3 => Test_DB_ORM_Blog::Posting(array(
+      Test_DB_ORM_Blog::Posting(array(
         'id' => 3,
         'user_id' => 2,
         'title' => 'Передача по ссылке в PHP',
         'body' => 'Как выяснилось эксперементально ссылки лучше использовать когда ...',
         'published_at' => Time::parse('2007-1-1 10:00:00')
       )),
-      4 => Test_DB_ORM_Blog::Posting(array(
+      Test_DB_ORM_Blog::Posting(array(
         'id' => 4,
         'user_id' => 3,
         'title' => 'Кризис охватил планету',
         'body' => 'Кризис как всемирное потепление ...',
         'published_at' => Time::parse('2008-9-10 10:11:12')
       )),
-      5 => Test_DB_ORM_Blog::Posting(array(
+      Test_DB_ORM_Blog::Posting(array(
         'id' => 5,
         'user_id' => 2,
         'title' => 'Клинтон сново президент США :-)',
         'body' => 'Собственно сабж http://xxx.xxx.com',
         'published_at' => Time::parse('2008-11-4 9:15:16')
       )),
-      6 => Test_DB_ORM_Blog::Posting(array(
+      Test_DB_ORM_Blog::Posting(array(
         'id' => 6,
         'user_id' => 1,
         'title' => 'Блочная верстка',
