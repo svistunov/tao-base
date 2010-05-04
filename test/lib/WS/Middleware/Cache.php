@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.WS.Middleware.Cache" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.WS.Middleware.Cache" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'WS.Middleware.Cache', 'Test.WS');
 
 /// <class name="Test.WS.Middleware.Cache" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'WS.Middleware.Cache', 'Test.WS');
 class Test_WS_Middleware_Cache implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -29,6 +29,7 @@ class Test_WS_Middleware_Cache_ServiceCase extends Dev_Unit_TestCase {
   protected $app;
   protected $service;
   protected $adapter;
+  protected $path;
 
 ///   <protocol name="testing">
 
@@ -38,11 +39,20 @@ class Test_WS_Middleware_Cache_ServiceCase extends Dev_Unit_TestCase {
     $this->app = new Test_WS_SaveEnvApp();
     $this->service = WS_Middleware_Cache::Service(
       $this->app,
-      'fs://./test/data/WS/Middleware/Cache/',
+      'fs://'.($this->path = './test/data/WS/Middleware/Cache/'),
        array(
         '{cache}' => 60
        ));
     $this->adapter = new Test_WS_Adapter();
+  }
+///     </body>
+///   </method>
+
+///   <method name="teardown">
+///     <body>
+  public function teardown() {
+    foreach (IO_FS::Query()->recursive()->apply_to(IO_FS::Dir($this->path)) as $file)
+      IO_FS::rm($file->path);
   }
 ///     </body>
 ///   </method>
