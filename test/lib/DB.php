@@ -78,14 +78,15 @@ class Test_DB_Case extends Dev_Unit_DB_TestCase {
 ///   <method name="test_dsn">
 ///     <body>
   public function test_dsn() {
+    $dsn = clone $this->connection->dsn;
     $this->asserts->stringifying->
       assert_string(
-        $this->connection->dsn,
+        $dsn,
         'mysql://www:www@mysql.rd1.techart.intranet/test'
       );
 
     $this->asserts->accessing->
-      assert_read($this->connection->dsn, $r = array(
+      assert_read($dsn, $r = array(
         'type'     => 'mysql',
         'user'     => 'www',
         'password' => 'www',
@@ -96,8 +97,8 @@ class Test_DB_Case extends Dev_Unit_DB_TestCase {
         'parms'    => array(),
         'pdo_string' => 'mysql:host=mysql.rd1.techart.intranet;dbname=test'
       ))->
-      assert_undestroyable($this->connection->dsn, array_keys($r))->
-      assert_write($this->connection->dsn, array(
+      assert_undestroyable($dsn, array_keys($r))->
+      assert_write($dsn, array(
         'type'     => 'mssql',
         'user'     => 'guest',
         'password' => '123',
@@ -108,7 +109,7 @@ class Test_DB_Case extends Dev_Unit_DB_TestCase {
         'parms'    => array('param' => 'value'),
       ))->
       assert_equal(
-        $this->connection->dsn->as_string(),
+        $dsn->as_string(),
         'mssql://guest:123@mssql.rd1.techart.intranet:9988/test?param=value'
       );
   }

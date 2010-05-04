@@ -1,12 +1,12 @@
 <?php
-/// <module name="Dev.Unit.DB" maintainer="svistunov@techart.ru" version="0.1.1">
+/// <module name="Dev.Unit.DB" maintainer="svistunov@techart.ru" version="0.1.2">
 Core::load('DB', 'Dev.Unit', 'Proc', 'IO.FS');
 
 /// <class name="Dev.Unit.DB" stereotype="module">
 ///   <implements interface="Core.ModuleInterface" />
 class Dev_Unit_DB implements Core_ModuleInterface {
 ///   <constants>
-  const VERSION = '0.1.1';
+  const VERSION = '0.1.2';
 ///   </constants>
 
   static protected $options = array(
@@ -276,4 +276,4 @@ class Dev_Unit_DB_TestCase extends Dev_Unit_TestCase {
 /// </class>
 
 /// </module>
-?
+?>
