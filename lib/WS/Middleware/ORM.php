@@ -1,5 +1,5 @@
 <?php
-/// <module name="WS.Middleware.ORM" version="0.2.1" maintainer="timokhin@techart.ru">
+/// <module name="WS.Middleware.ORM" version="0.2.2" maintainer="timokhin@techart.ru">
 ///   <brief>Сервис подключения к базе данных с использованием модуля DB.ORM</brief>
 ///   <details>
 ///     <p>Сервис обеспечивает все последующие сервисы деревом мапперов, обеспечивающих объектно-ориентированный
@@ -20,7 +20,7 @@ Core::load('DB.ORM', 'WS');
 class WS_Middleware_ORM implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -98,9 +98,9 @@ class WS_Middleware_ORM_Service extends WS_MiddlewareService {
 ///     </args>
 ///     <body>
   public function run(WS_Environment $env) {
-    $connection = DB::Connection(Core::if_not($this->dsn, $env->config->db->dsn));
+    $connection = DB::Connection($this->dsn ? $this->dsn : $env->config->db->dsn);
 
-    if ($l = $env->config->db->log) {
+    if (isset($env->config) && $l = $env->config->db->log) {
       Core::load('Dev.DB.Log');
       $this->logger = Dev_DB_Log::Logger(IO_FS::FileStream($l, 'a'));
     }
