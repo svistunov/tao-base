@@ -1,5 +1,5 @@
 <?php
-/// <module name="JSON" version="0.2.1" maintainer="timokhin@techart.ru">
+/// <module name="JSON" version="0.2.2" maintainer="timokhin@techart.ru">
 
 Core::load('Time', 'Object');
 
@@ -7,7 +7,7 @@ Core::load('Time', 'Object');
 class JSON implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -191,7 +191,7 @@ class JSON_Converter {
       if (is_object($item) && $item instanceof Object_AttrListInterface)
         $items[] = $this->encode_object($item, $flavor);
       else
-        $items[] = $this->encode_scalar($item);
+        $items[] = $this->encode_scalar($item, $attr);
 
     return $items;
   }
