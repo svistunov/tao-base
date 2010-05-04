@@ -1,13 +1,13 @@
 <?php
-/// <module name="Test.WS.Middleware.DB" version="0.1.0" maintainer="svistunov@techart.ru">
-Core::load('Dev.Unit', 'WS.Middleware.DB', 'Test.WS');
+/// <module name="Test.WS.Middleware.DB" version="0.1.1" maintainer="svistunov@techart.ru">
+Core::load('Dev.Unit', 'WS.Middleware.DB', 'Test.WS', 'Dev.Unit.DB');
 
 /// <class name="Test.WS.Middleware.DB" stereotype="module">
 ///   <implements interface="Dev.Unit.TestModuleInterface" />
 class Test_WS_Middleware_DB implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -37,7 +37,7 @@ class Test_WS_Middleware_DB_ServiceCase extends Dev_Unit_TestCase {
   protected function setup() {
     $this->app = new Test_WS_SaveEnvApp();
     $this->service = WS_Middleware_DB::Service(
-      $this->app, 'mysql://app:app@localhost/test');
+      $this->app, Dev_Unit_DB::option('dsn'));
     $this->adapter = new Test_WS_Adapter();
   }
 ///     </body>

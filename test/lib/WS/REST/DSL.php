@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.WS.REST.DSL" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.WS.REST.DSL" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'WS.REST.DSL');
 
 /// <class name="Test.WS.REST.DSL" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'WS.REST.DSL');
 class Test_WS_REST_DSL implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -71,7 +71,7 @@ class Test_WS_REST_DSL_ApplicationCase extends Dev_Unit_TestCase {
       assert_read($this->app, array(
         'media_types' => array (
                         'html' => 'text/html',
-                        'js' => 'application/json',
+                        'js' => 'text/javascript',
                         'json' => 'application/json',
                         'xml' => 'application/xml',
                         'rss' => 'application/rss+xml'

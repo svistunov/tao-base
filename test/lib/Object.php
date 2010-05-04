@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'Object', 'Time');
 class Test_Object implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -764,9 +764,8 @@ class Test_Object_Aggregator extends Dev_Unit_TestCase {
   protected function setup() {
     $this->tracks = Core::hash();
     $this->aggregator = Object::Aggregator()->
-      append(
-        new Test_Object_Aggregator__Delegate1($this->tracks, 'test1'),
-        new Test_Object_Aggregator__Delegate2($this->tracks, 'test2'))->
+      append(new Test_Object_Aggregator__Delegate1($this->tracks, 'test1'))->
+      append(new Test_Object_Aggregator__Delegate2($this->tracks, 'test2'))->
       fallback_to(
         Object::Aggregator()->
           append(new Test_Object_Aggregator__Delegate3($this->tracks, 'test3')));
@@ -790,7 +789,7 @@ class Test_Object_Aggregator extends Dev_Unit_TestCase {
       $this->aggregator->test2('call2');
       $this->aggregator->test3('call3');
     } catch (Exception $e) {
-    	$this->trap($e);
+      $this->trap($e);
     }
     $this->
       assert_no_exception()->

@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.CLI.Application" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.CLI.Application" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'CLI', 'CLI.Application');
 
 /// <class name="Test.CLI.Application" stereotype="module">
@@ -8,7 +8,7 @@ Core::load('Dev.Unit', 'CLI', 'CLI.Application');
 class Test_CLI_Application implements Dev_Unit_TestModuleInterface, CLI_RunInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
   static protected $app;
@@ -203,8 +203,8 @@ class Test_CLI_Application_ApplicationCase extends Dev_Unit_TestCase {
   protected function setup() {
     $this->__stdout__ = IO::stdout();
     $this->__stderr__ = IO::stderr();
-    IO::stdout(IO_Stream::NamedResourceStream('php://memory'));
-    IO::stderr(IO_Stream::NamedResourceStream('php://memory'));
+    IO::stdout(IO_Stream::NamedResourceStream('php://memory', 'wb'));
+    IO::stderr(IO_Stream::NamedResourceStream('php://memory', 'wb'));
     $this->app = Test_CLI_Application::app(new Test_CLI_Application_App());
   }
 ///     </body>

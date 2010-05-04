@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.DB.ORM.SQL" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.DB.ORM.SQL" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'DB.ORM.SQL');
 
 /// <class name="Test.DB.ORM.SQL" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'DB.ORM.SQL');
 class Test_DB_ORM_SQL implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -78,7 +78,7 @@ class Test_DB_ORM_SQL_Select extends Dev_Unit_TestCase {
         range(5)->
         index('index_name');
 
-      $to_equal = "SELECT n.title title, n.body body, c.careate_at careate_at, id, c.caption name\n".
+      $to_equal = "SELECT  n.title title, n.body body, c.careate_at careate_at, id, c.caption name\n".
         "FROM news n, category c USE INDEX (index_name) LEFT JOIN dates ON (dates.date = c.create_at) \n".
         "WHERE (id = :wid)\n".
         "GROUP BY n.id\n".

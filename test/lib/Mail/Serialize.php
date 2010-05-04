@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.Mail.Serialize" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.Mail.Serialize" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'Mail.Serialize');
 
 /// <class name="Test.Mail.Serialize" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'Mail.Serialize');
 class Test_Mail_Serialize implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -110,7 +110,7 @@ EOF;
 
 
 
-    $this->stream = IO_Stream::NamedResourceStream('php://memory')->
+    $this->stream = IO_Stream::NamedResourceStream('php://memory', 'wb')->
       write($this->data)->rewind();
     $this->decoder = Mail_Serialize::Decoder()->from($this->stream);
 
