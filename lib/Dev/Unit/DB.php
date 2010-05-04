@@ -1,16 +1,17 @@
 <?php
-/// <module name="Dev.Unit.DB" maintainer="svistunov@techart.ru" version="0.1.0">
-Core::load('DB', 'Dev.Unit');
+/// <module name="Dev.Unit.DB" maintainer="svistunov@techart.ru" version="0.1.1">
+Core::load('DB', 'Dev.Unit', 'Proc', 'IO.FS');
 
 /// <class name="Dev.Unit.DB" stereotype="module">
 ///   <implements interface="Core.ModuleInterface" />
 class Dev_Unit_DB implements Core_ModuleInterface {
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
   static protected $options = array(
     'dsn' => 'mysql://www:www@mysql.rd1.techart.intranet/test',
+    'db_script' => 'mysql -u%s -p%s -h%s %s'
   );
 
 ///   <protocol name="configuring">
@@ -48,7 +49,7 @@ class Dev_Unit_DB implements Core_ModuleInterface {
 /// <class name="Dev.Unit.DB.TestCase" exteds="Dev.Unit.TestCase">
 class Dev_Unit_DB_TestCase extends Dev_Unit_TestCase {
   protected $connection;
-  protected $data;
+  protected $data = array();
 
 ///   <protocol name="testing">
 
@@ -103,7 +104,7 @@ class Dev_Unit_DB_TestCase extends Dev_Unit_TestCase {
 ///     <body>
   protected function create_sql($path = null) {
     $path = $path ? $path : $this->default_path_for('create.sql');
-    $this->connection->execute(file_get_contents($path));
+    $this->sql($path);
   }
 ///     </body>
 ///   </method>
@@ -129,7 +130,7 @@ class Dev_Unit_DB_TestCase extends Dev_Unit_TestCase {
 ///     <body>
   protected function drop_sql($path = '') {
     $path = $path ? $path : $this->default_path_for('drop.sql');
-    $this->connection->execute(file_get_contents($path));
+    $this->sql($path);
   }
 ///     </body>
 ///   </method>
@@ -163,10 +164,10 @@ class Dev_Unit_DB_TestCase extends Dev_Unit_TestCase {
 ///     </args>
 ///     <body>
   private function insert_rows($table,$rows) {
-      foreach($rows as $row) {
+      foreach ($rows as $row) {
         $columns = array();
         $values = array();
-        foreach($row as $column => $value) {
+        foreach ($row as $column => $value) {
           $columns[] = "`$column`";
           $values[] = "'$value'";
         }
@@ -178,10 +179,101 @@ class Dev_Unit_DB_TestCase extends Dev_Unit_TestCase {
 ///     </body>
 ///   </method>
 
+///   <method name="sql">
+///     <args>
+///       <arg name="path" type="string" />
+///     </args>
+///     <body>
+  protected function sql($path) {
+    $p = Proc::Pipe($this->build_command(), 'wb');
+    foreach (IO_FS::File($path) as $line)
+      $p->write($line);
+    $p->close();
+    if ($p->exit_status != 0) throw new Core_Exception('Erro while running db_script');
+  }
+///     </body>
+///   </method>
+
+///   <method name="build_command">
+///     <body>
+  protected function build_command() {
+    return vsprintf(Dev_Unit_DB::option('db_script'), array(
+      $this->connection->dsn->user,
+      $this->connection->dsn->password,
+      $this->connection->dsn->host,
+      $this->connection->dsn->database,
+      $this->connection->dsn->scheme,
+      $this->connection->dsn->port,
+    ));
+  }
+///     </body>
+///   </method>
+
+///   </protocol>
+
+///   <protocol name="accessing">
+
+///   <method name="__get" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __get($property) {
+    if (key_exists($property, $this->data))
+      return $this->data[$property];
+    else
+      return parent::__get($property);
+  }
+///     </body>
+///   </method>
+
+///   <method name="__set" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///       <arg name="value" />
+///     </args>
+///     <body>
+  public function __set($property, $value) {
+    if (key_exists($property, $this->data))
+      throw new Core_ReadOnlyPropertyException($property);
+    else
+      return parent::__set($property);
+  }
+///     </body>
+///   </method>
+
+///   <method name="__isset" returns="boolean">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __isset($property) {
+    if (key_exists($property, $this->data))
+      return true;
+    else
+      return parent::__set($property);
+  }
+///     </body>
+///   </method>
+
+///   <method name="__unset">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __unset($property) {
+    if (key_exists($property, $this->data))
+      throw new Core_ReadOnlyPropertyException($property);
+    else
+      return parent::__set($property);
+  }
+///     </body>
+///   </method>
+
 ///   </protocol>
 
 }
 /// </class>
 
 /// </module>
-?>
+?
