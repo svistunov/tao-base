@@ -7,7 +7,7 @@ Core::load('Test.DB.ORM');
 class Test_DB_ORM_Blog implements Test_DB_ORM_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -127,7 +127,7 @@ class Test_DB_ORM_Blog_Tag extends Test_DB_ORM_Entity {
 ///     </body>
 ///   </method>
 
-//  </protocol>
+///  </protocol>
 }
 /// </class>
 
