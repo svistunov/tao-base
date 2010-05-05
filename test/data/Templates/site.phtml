@@ -1,0 +1,38 @@
+<?php
+$this->
+    css('common.css', 'site.css')->
+    js('jquery.js');
+?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Test page for Tets.Templates</title>
+  
+  <?= $this['rss'] ?>
+  <?= $this['css'] ?>
+  <?= $this['js'] ?>
+  
+  <script>
+    <?= $this['script']."\n"; ?>
+  </script>
+  
+</head>
+
+
+<body>
+  <div id="header">
+  Something in site head from parameter $head: <?= $head ?>
+  </div>
+
+  <div id="content">
+    Main part. From nested template.
+    <?= $this['body'] ?>
+  </div>
+
+  <div id="footer">
+    Insert footer from partial template with own parametres
+    <?= $this->partial('footer', array('copyright' => 'TAO'))?>
+  </div>
+</body>
+</html>

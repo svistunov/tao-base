@@ -1,0 +1,15 @@
+<?php $this->css('site/news.css') ?>
+
+<?php $this->begin('rss')?>
+<link title="News" type="application/rss+xml" rel="alternate" href="/news/index.rss"/>
+<?php $this->end('rss')?>
+
+<?php $this->append_to('script', '$(function() {alert("test");});')?>
+
+For exalmpe list of news
+<ul>
+  <?php foreach($news as $k => $v) {?>
+  <?= $this->content_tag('li', $v)?>
+  <?php }?>
+</ul>
+Parametres from parent template: $head -  <?= $head ?> 
