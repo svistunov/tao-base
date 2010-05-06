@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.XML.Feed" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.XML.Feed" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'XML.Feed');
 
 /// <class name="Test.XML.Feed" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'XML.Feed');
 class Test_XML_Feed implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -72,6 +72,7 @@ class Test_XML_Feed_ParserCase extends Dev_Unit_TestCase {
         'title' => 'Sample Feed',
         'description' => 'For documentation <em>only</em>',
         'link' => 'http://example.org/',
+        'published_at' => Time::DateTime('2002-09-07 04:00:01'),
         'language' => 'en',
         'copyright' => 'Copyright 2004, Mark Pilgrim',
         'managing_editor' => 'editor@example.org',
@@ -118,6 +119,7 @@ class Test_XML_Feed_ParserCase extends Dev_Unit_TestCase {
         'title' => 'Sample Feed',
         'link' => 'http://example.org/',
         'description' => 'For documentation <em>only</em>',
+        'published_at' => Time::DateTime('2005-11-09 14:56:34'),
         'updated' => Time::DateTime('2005-11-09 14:56:34')))->
       assert_equal(count($feed), 1)->
       assert_read_only($feed[0], array(
@@ -148,6 +150,7 @@ class Test_XML_Feed_ParserCase extends Dev_Unit_TestCase {
         'title' => 'Sample Feed',
         'link' => 'http://www.example.org/',
         'description' => 'For documentation only',
+        'published_at' => Time::DateTime('2004-06-05 02:40:33'),
         'dc:date' => Time::DateTime('2004-06-05 02:40:33')))->
       assert_equal(count($feed), 1)->
       assert_read_only($feed[0], array(
@@ -177,6 +180,7 @@ class Test_XML_Feed_ParserCase extends Dev_Unit_TestCase {
         'title' => 'Sample Feed',
         'link' => 'http://example.org/',
         'description' => '<div><p>This is an Atom syndication feed.</p></div>',
+        'published_at' => Time::DateTime('2004-04-20 15:56:34'),
         'modified' => Time::DateTime('2004-04-20 15:56:34')))->
       assert_equal(count($feed), 1)->
       assert_read_only($feed[0], array(
