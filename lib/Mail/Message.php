@@ -1,5 +1,5 @@
 <?php
-/// <module name="Mail.Message" maintainer="timokhin@techart.ru" version="0.2.2">
+/// <module name="Mail.Message" maintainer="timokhin@techart.ru" version="0.2.3">
 ///   <brief>Объектное представление почтового сообщения</brief>
 ///   <details>
 ///   <p>Модуль определяет классы, соответствующие таким элементам почтового сообщения, как
@@ -16,7 +16,7 @@ Core::load('Object', 'Fn', 'IO.FS', 'Mail');
 class Mail_Message implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.2';
+  const VERSION = '0.2.3';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -799,7 +799,7 @@ class Mail_Message_Part
 ///   </method>
 
 ///   <method name="__isset" returns="boolean">
-///     <brief>Проверяет установленно ли свойство</brief>
+///     <brief>Проверяет установлено ли свойство</brief>
 ///     <args>
 ///       <arg name="property" type="string" brief="имя свойства" />
 ///     </args>
