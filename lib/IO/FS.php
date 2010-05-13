@@ -1,5 +1,5 @@
 <?php
-/// <module name="IO.FS" version="0.2.0" maintainer="timokhin@techart.ru">
+/// <module name="IO.FS" version="0.2.2" maintainer="timokhin@techart.ru">
 ///     <brief>Работа с файловой системой</brief>
 ///     <details>
 ///       <p>Модуль реализует набор классов для работы с файлами и каталогами. Для файлов и
@@ -25,7 +25,7 @@ Core::load('Time', 'IO.Stream', 'MIME');
 class IO_FS implements  Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION  = '0.2.1';
+  const VERSION  = '0.2.2';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -965,6 +965,17 @@ class IO_FS_File
 ///   </method>
 
 ///   </protocol>
+
+///   <protocol name="quering">
+
+///   <method name="exists" returns="boolean">
+///     <body>
+  public function exists() { return file_exists($this->path); }
+///     </body>
+///   </method>
+
+///   </protocol>
+
 
 ///   <protocol name="supporting">
 
