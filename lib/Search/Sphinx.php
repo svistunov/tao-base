@@ -1,5 +1,5 @@
 <?php
-/// <module name="Search.Sphinx" version="0.2.1" maintainer="svistunov@techart.ru">
+/// <module name="Search.Sphinx" version="0.2.2" maintainer="svistunov@techart.ru">
 ///  <brief>Модуль предоставляющий интерфейс для доступа к полнотекстовому поисковому движку Sphinx</brief>
 ///  <details>
 ///   За болеее подробной информацией обращайтесь к <a href="http://www.sphinxsearch.com/docs/">документации Sphinx</a>
@@ -11,7 +11,7 @@ Core::load('Object');
 class Search_Sphinx implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
 ///   </constants>
 
   const DEFAULT_RANGE = 20;
@@ -71,8 +71,8 @@ interface Search_Sphinx_ResolverInterface {
 
 /// <class name="Search.Sphinx.Client">
 ///   <brief>Клиент для обращения к Sphinx</brief>
-//TODO: может сделать перенаправление методов __сall в SphinxClient
-class Search_Sphinx_Client {
+///   <implements interface="Core.CallInterface" />
+class Search_Sphinx_Client implements Core_CallInterface {
 
   private $client;
 
@@ -92,7 +92,7 @@ class Search_Sphinx_Client {
     $this->client = new SphinxClient();
 
     $this->catch_errors(
-    ($this->client->SetServer($m[1], Core::if_not($m[2], 3312)) !== false) &&
+    ($this->client->SetServer($m[1], (int) Core::if_not($m[3], 3312)) !== false) &&
     ($this->client->setMatchMode($mode) !== false) &&
     ($this->client->setArrayResult(true) !== false));
   }
@@ -215,8 +215,14 @@ class Search_Sphinx_Client {
     ($resolver ?
     new Search_Sphinx_Results($r, $resolver) :
     new Search_Sphinx_Results($r)) :
-    new Search_Sphinx_Results(array('matches' => array(), 'total' => 0, 'total_found' => 0, 'words' => array(),'warning' => '', 'error' => ''));
-
+    new Search_Sphinx_Results(array(
+      'matches' => array(),
+      'total' => 0,
+      'total_found' => 0,
+      'words' => array(),
+      'warning' => $this->client->GetLastWarning(),
+      'error' => $this->client->GetLastError())
+    );
   }
 ///     </body>
 ///   </method>
@@ -249,6 +255,23 @@ class Search_Sphinx_Client {
   }
 ///     </body>
 ///   </method>
+
+///   </protocol>
+
+///   <protocol name="calling">
+
+///   <method name="__call">
+///     <brief>Перенаправляет вызовы в стандартный client с учетом CameCase</brief>
+///     <args>
+///       <arg name="method" type="string" />
+///       <arg name="args" type="array" />
+///     </args>
+///     <body>
+  public function __call($method, $args) {
+    return call_user_func_array(array($this->client, Core_Strings::to_camel_case($method)), $args);
+  }
+///     </body>
+////  </method>
 
 ///   </protocol>
 }
@@ -499,7 +522,9 @@ class Search_Sphinx_Results
 
 /// <class name="Search.Sphinx.Query">
 ///   <brief>Класс содержащий настройки поиска, и позволяющий их задавать</brief>
-class Search_Sphinx_Query implements IteratorAggregate {
+///   <implements interface="IteratorAggregate" />
+///   <implements interface="Core.PropertyAccessInterface" />
+class Search_Sphinx_Query implements IteratorAggregate, Core_PropertyAccessInterface {
 
   protected $options;
 
@@ -520,6 +545,71 @@ class Search_Sphinx_Query implements IteratorAggregate {
   public function __construct(Search_Sphinx_Client $client, $expression) {
     $this->client = $client;
     $this->expression = (string) $expression;
+  }
+///     </body>
+///   </method>
+
+///   </protocol>
+
+///   <protocol name="accessing">
+
+///   <method name="__get" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __get($property) {
+    switch ($property) {
+      case 'options':
+      case 'client':
+      case 'expression':
+      case 'resolver':
+        return $this->$property;
+      default:
+        throw new Core_MissingPropertyException($property);
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="__set" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///       <arg name="value" />
+///     </args>
+///     <body>
+  public function __set($property, $value) {
+    throw new Core_ReadOnlyObjectException($this);
+  }
+///     </body>
+///   </method>
+
+///   <method name="__isset" returns="boolean">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __isset($property) {
+      switch ($property) {
+      case 'options':
+      case 'client':
+      case 'expression':
+      case 'resolver':
+        return (boolean) $this->$property;
+      default:
+        return false;
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="__unset">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __unset($property) {
+    throw new Core_ReadOnlyObjectException($this);
   }
 ///     </body>
 ///   </method>
