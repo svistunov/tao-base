@@ -1,166 +1,225 @@
 <?php
-/// <module name="WS.Middleware" version="0.2.0" maintainer="timokhin@techart.ru">
+/// <module name="WS.DSL" version="0.3.0" maintainer="timokhin@techart.ru">
+///   <brief>Простейший builder для построения приложения из набора middleware-компонентов и </brief>
+///   <details>
+///     <p>Модуль реализует класс WS.DSL.Builder, позволящий строить приложение из набора стандартных
+///        компонент последовательными вызовами соответствующих методов.</p>
+///     <p></p>
+///   </details>
 
-/// <class name="WS.Middleware" stereotype="module">
+/// <class name="WS.DSL" stereotype="module">
+///   <brief>Модуль WS.DSL</brief>
+///   <details>
+///     <p>Построение приложения выполняется с помощью объектов класса WS.DSL.Builder. Класс реализует
+///        Core.CallInterface, и делает это следующим образом.</p>
+///     <p>Существует набор стандартных вызовов, каждый их которых приводит к созданию соответствующиего слоя 
+///        middleware или терминального обработчика.</p>
+///     <p>Набор вызовов для создания middleware:</p>
+///     <dl>
+///       <dt>environment</dt><dd>WS.Middleware.Environment.Service — установка элементов окружения;</dd>
+///       <dt>config</dt><dd>WS.Middleware.Config.Service — конфигурирование приложения;</dd>
+///       <dt>db</dt><dd>WS.Middleware.DB.Service — подключение к БД;</dd>
+///       <dt>orm</dt><dd>WS.Middleware.ORM.Service — подключение к БД с использованием DB.ORM;</dd>
+///       <dt>cache</dt><dd>WS.Middleware.Cache.Service — кеширование;</dd>
+///       <dt>status</dt><dd>WS.Middleware.Status.Service — обработка ошибок и шаблоны HTTP-статуса;</dd>
+///       <dt>template</dt><dd>WS.Middleware.Template.Service — принудительное преобразование шаблона в строку;</dd>
+///       <dt>session</dt><dd>WS.Session.Service — поддержка сессий;</dd>
+///       <dt>auth_session</dt><dd>WS.Auth.Session.Service — авторизации с помощью сессий;</dd>
+///       <dt>auth_basic</dt><dd>WS.Auth.Basic.Service — HTTP Basic авторизация;</dd>
+///       <dt>auth_openid</dt><dd>WS.Auth.OpenID.Service — авторизация с помощью OpenID.</dd>
+///     </dl>
+///     <p>Набор вызовов для создания терминальных обработчиков:</p>
+///     <dl>
+///       <dt>application_dispatcher</dt><dd>WS.Rest.Dispatcher — диспетчер REST-приложений.</dd>
+///     </dl>
+///     <p>Вызов метода, соответствующего middleware-компоненту, сохраняет информацию о его параметрах и 
+///        возвращает ссылку на builder. Таким образом, вызывая эти методы последовательно, можно построить необходимую 
+///        цепочку обработчиков. Параметры метода должны соответствовать набору параметров конструктора сервиса, без 
+///        первого аргумента, который всегда следующий сервис в цепочке.</p>
+///     <p>Вызов метода, соответствующего терминальному обработчику, выполняет построение всей цепочки middleware-компонентов, 
+///        определенной ранее, завершает ее соответствующим терминальным обработчиком и возвращает получившуюся цепочку. Параметры
+///        метода соответствуют параметрам обработчика.</p>
+///     <p>Если необходимо указать свой собственный терминальный обработчик, это можно сделать с помощью вызова application().</p>
+///     <p>Таким образом, следующий код создаст приложение, читающее конфигурацию из файла, поключащееся к базе данных и 
+///        используюшее пользовательский обработчик для всего остального.</p>
+///     <code>
+///       $application = WS_DSL::Builder()->
+///         config('../etc/config.php')->
+///         cache('dummy://')->
+///         application(new App_WS_ApplicationService());
+///     </code>
+///     <p>Набор поддерживаемых методов можно расширять. Для этого необходимо воспользоваться механизмом
+///        конфигурирования модуля. Компоненты middleware регистрируются с помощью опции middleware, 
+///        терминальные обработчики — с помощью опции handlers.</p>
+///     <code>
+///     Core::configure('WS.DSL', array(
+///       'middleware' => array(
+///         'app_middleware' => 'App.WS.Middleware.CustomService'),
+///       'handlers'   => array(
+///         'custom_app' => 'App.WS.ApplicationService')));
+///     </code>
+///     <p>После этого можно использовать эти вызовы при построении приложения, например:</p>
+///     <code>
+///       $application = WS_DSL::Builder()->
+///         config('../etc/config.php')->
+///         app_middleware($parms)->
+///         custom_app();
+///     </code>
+///   </details>
 ///   <implements interface="Core.ModuleInterface" />
 class WS_DSL implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
+  
+  const PREFIX  = 'WS.Middleware';
+  const SUFFIX  = 'Service';
 ///   </constants>
 
+  static public $middleware = array(
+    'environment'  => '.Environment.',
+    'config'       => '.Config.',
+    'db'           => '.DB.',
+    'orm'          => '.ORM.',
+    'cache'        => '.Cache.',
+    'status'       => '.Status.',
+    'template'     => '.Template.',
+    'session'      => 'WS.Session.',
+    'auth_session' => 'WS.Auth.Session.',
+    'auth_basic'   => 'WS.Auth.Basic.',
+    'auth_openid'  => 'WS.Auth.OpenID.');
+  
+  static public $handlers = array(
+    'application_dispatcher' => 'WS.REST.Dispatcher');
+
+///   <protocol name="creating">
+  
+///   <method name="initialize" scope="class">
+///     <brief>Выполняет инициализацию модуля</brief>
+///     <args>
+///       <arg name="options" type="array" default="array()" />
+///     </args>
+///     <body>
+  static public function initialize(array $options = array()) {
+
+    if (isset($options['middleware']) && is_array($options['middleware'])) 
+      self::$middleware = array_merge(self::$middleware, $options['middleware']);
+    
+    if (isset($options['handlers']) && is_array($options['handlers'])) 
+      self::$handlers= array_merge(self::$handlers, $options['handlers']);    
+  }  
+///     </body>
+///   </method>
+  
+///   </protocol>
+  
 ///   <protocol name="building">
+  
+///   <method name="application" returns="WS.DSL.Builder" scope="class">
+///     <brief>Создает объект класса WS.DSL.Builder</brief>
+///     <body>
+  static public function Builder() { return new WS_DSL_Builder(); }
+///     </body>
+///   </method>
 
-///   <method name="config" returns="WS.Middleware.Config.Service" scope="class">
+///   </protocol>
+}
+/// </class>
+
+
+/// <class name="WS.DSL.Builder">
+///   <implements interface="Core.CallInterface" />
+///   <brief>Диспетчер динамических вызовов</brief>
+class WS_DSL_Builder implements Core_CallInterface {
+  
+  protected $middleware = array();
+
+///   <protocol name="calling" type="Core.CallInterface">
+ 
+///   <method name="__call" returns="mixed">
+///     <brief>Создает терминальный обратчик или сохраняет информацию о middleware в очереди</brief>
 ///     <args>
-///       <arg name="path" type="string" />
-///       <arg name="application" type="WS.ServiceInterface" />
+///       <arg name="method" type="string" brief="имя метода" />
+///       <arg name="parms"  type="array"  brief="набор параметров" />
 ///     </args>
 ///     <body>
-  static public function config($path, WS_ServiceInterface $application) {
-    Core::load('WS.Middleware.Config');
-    return WS_Middleware_Config::Service($application, $path);
+  public function __call($method, $parms) {
+    return $this->add_middleware($method, $parms) ?  $this : $this->make_handler($method, $parms);
   }
 ///     </body>
 ///   </method>
+  
+///   </protocol>
+  
+///   <protocol name="supporting">
 
-///   <method name="db" returns="WS.Middleware.DB.Service" scope="class">
+///   <method name="add_middleware" returns="boolean" access="protected">
+///     <brief>Сохраняет информацию о параметрах вызова middleware в очереди</brief>
+///     <args>
+///       <arg name="method" type="string" brief="имя метода"   />
+///       <arg name="parms"  type="array"  brief="параметры вызова" />
+///     </args>
 ///     <body>
-  static public function db() {
-    Core::load('WS.Middleware.DB');
-    $args = func_get_args();
-    return (count($args) == 1) ?
-      WS_Middleware_DB::Service($args[0]) :
-      WS_Middleware_DB::Service($args[1], $args[0]);
+  protected function add_middleware($method, $parms) {
+    if (isset(WS_DSL::$middleware[$method])) {
+      $this->middleware[] = array('class' => WS_DSL::$middleware[$method], 'parms' => $parms);
+      return true;
+    } else
+      return false;
   }
 ///     </body>
 ///   </method>
-
-///   <method name="orm" returns="WS.Middleware.ORM.Service" scope="class">
+  
+///   <method name="make_handler" access="protected">
+///     <brief>Создает терминальный обработчик</brief>
+///     <details>
+///       <p>Если в очереди вызово присутствуют middleware-компоненты — создает экземпляры в порядке, 
+///          обратном порядку определения.</p>
+///     </details>
+///     <args>
+///       <arg name="method" type="string" brief="имя метода" />
+///       <arg name="parms"  type="array"  brief="параметры вызова" />
+///     </args>
 ///     <body>
-  static public function orm() {
-    Core::load('WS.Middleware.ORM');
-    $args = func_get_args();
-    return (count($args) == 2) ?
-      WS_Middleware_ORM::Service($args[1], $args[0]) :
-      WS_Middleware_ORM::Service($args[2], $args[1], $args[0]);
-  }
-///     </body>
-///   </method>
-
-///   <method name="cache" returns="WS.Middleware.Cache.Service" scope="class">
-///     <body>
-  static public function cache() {
-    Core::load('WS.Middleware.Cache');
-    $args = func_get_args();
-    if (count($args) == 1) return WS_Middleware_Cache::Service($args[0]);
-    if (count($args) == 3) return WS_Middleware_Cache::Service($args[2], $args[0], $args[1]);
-    if (count($args) == 2) {
-      return is_array($args[0]) ?
-        WS_Middleware_Cache::Service($args[1], '', $args[0]) :
-        WS_Middleware_Cache::Service($args[1], $args[0]);
+  protected function make_handler($method, $parms) {
+    if (isset(WS_DSL::$handlers[$method])) {
+      return $this->build_middleware(Core::amake($this->complete_name(WS_DSL::$handlers[$method]), $parms));
     }
-
   }
 ///     </body>
 ///   </method>
-
-///   <method name="status" returns="WS.Middleware.Status.Service" scope="class">
-///     <body>
-  static public function status() {
-    Core::load('WS.Middleware.Status');
-    $args = func_get_args();
-    return (count($args) == 2) ?
-      WS_Middleware_Status::Service($args[1], $args[0]) :
-      WS_Middleware_Status::Service($args[2], $args[1], $args[0]);
-  }
-///     </body>
-///   </method>
-
-///   <method name="template" returns="WS.Middleware.Template.Service" scope="class">
+  
+///   <method name="build_middleware" returns="WS.ServiceInterface" access="protected">
+///     <brief>Строит цепочку middleware-компонент</brief>
 ///     <args>
-///       <arg name="application" type="WS.ServiceInterface" />
+///       <arg name="app" type="WS.ServiceInterface" brief="терминальный обработчик" />
 ///     </args>
 ///     <body>
-  static public function template($application) {
-    Core::load('WS.Middleware.Template');
-    return WS_Middleware_Template::Service($application);
+  protected function build_middleware(WS_ServiceInterface $app) {
+    for ($i = count($this->middleware) - 1; $i >= 0; $i--) {
+      $c = $this->complete_name($this->middleware[$i]['class']);
+      Core::load(substr($c, 0, strrpos($c, '.')));
+      $app = Core::amake($c, array_merge(array($app), $this->middleware[$i]['parms']));
+    }
+    return $app;
   }
 ///     </body>
 ///   </method>
 
-///   <method name="session" returns="WS.Session.Service" scope="class">
+///   <method name="complete_name" returns="string" access="protected">
+///     <brief>Выполняет развертывание имени компонента</brief>
 ///     <args>
-///       <arg name="application" type="WS.ServiceInterface" />
+///       <arg name="name" type="string" brief="сокращенное имя класса" />
 ///     </args>
+///     <details>
+///       <p>Если имя класса компонента начинается на «.», к нему добавляется префикс «WS.Middleware».</p>
+///       <p>Если имя класса заканчивается на «.», к нему добавляется суффикс «Service».</p>
+///     </details>
 ///     <body>
-  static public function session($application) {
-    Core::load('WS.Session');
-    return WS_Session::Service($application);
-  }
-///     </body>
-///   </method>
-
-///   <method name="auth_session" returns="WS.Auth.Session.Service" scope="class">
-///     <body>
-  static public function auth_session() {
-    Core::load('WS.Auth.Session');
-    $args = func_get_args();
-    return (count($args) == 2) ?
-      WS_Auth_Session::Service($args[1], $args[0]) :
-      WS_Auth_Session::Service($args[2], $args[1], $args[0]);
-  }
-///     </body>
-///   </method>
-
-///   <method name="auth_basic" returns="WS.Auth.Basic.Service" scope="class">
-///     <args>
-///       <arg name="auth_module" type="WS.Auth.AuthModuleInterface" />
-///       <arg name="application" type="WS.ServiceInterface" />
-///     </args>
-///     <body>
-  static public function auth_basic(WS_Auth_AuthModuleInterface $auth_module, WS_ServiceInterface $application) {
-    Core::load('WS.Auth.Basic');
-    return WS_Auth_Basic::Service($application, $auth_module);
-  }
-///     </body>
-///   </method>
-
-///   <method name="auth_openid" returns="WS.Auth.OpenID.Service" scope="class">
-///     <args>
-///       <arg name="ayth_module" type="WS.Auth.AuthModuleInterface" />
-///       <arg name="application" type="WS.ServiceInterface" />
-///     </args>
-///     <body>
-  static public function auth_openid(WS_Auth_AuthModuleInterface $auth_module, WS_ServiceInterface $application) {
-    Core::load('WS.Auth.OpenID');
-    return WS_Auth_OpenID::Service($application, $auth_module);
-  }
-///     </body>
-///   </method>
-
-///   <method name="application_dispatcher" returns="WS.Middleware.Dispatcher" scope="class">
-///     <args>
-///       <arg name="mappings" type="array" />
-///       <arg name="application" type="WS.ServiceInterface" />
-///     </args>
-///     <body>
-  static public function application_dispatcher(array $mappings, $default = '') {
-    Core::load('WS.REST');
-    return WS_REST::Dispatcher($mappings, $default);
-  }
-///     </body>
-///   </method>
-
-///   <method name="environment">
-///     <args>
-///       <arg name="values"      type="array" />
-///       <arg name="application" type="WS.ServiceInterface" />
-///     </args>
-///     <body>
-  static public function environment(array $values, WS_ServiceInterface $application) {
-    Core::load('WS.Middleware.Environment');
-    return WS_Middleware_Environment::Service($application, $values);
+  protected function complete_name($name) {
+    if (Core_Strings::ends_with($name, '.'))   $name = $name.WS_DSL::SUFFIX;
+    if (Core_Strings::starts_with($name, '.')) $name = WS_DSL::PREFIX.$name;
+    return $name;
   }
 ///     </body>
 ///   </method>

@@ -1,5 +1,5 @@
 <?php
-/// <module name="WS.Middleware.Cache" version="0.2.0" maintainer="timokhin@techart.ru">
+/// <module name="WS.Middleware.Cache" version="0.2.2" maintainer="timokhin@techart.ru">
 /// <brief>Сервис кеширования</brief>
 /// <details>
 ///   <p>Сервис выполняет двойную функцию. Во-первых, он создает экземпляр объекта кеширования и записывает его в объект окружения,
@@ -17,7 +17,7 @@ Core::load('Cache', 'WS');
 class WS_Middleware_Cache implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -30,8 +30,9 @@ class WS_Middleware_Cache implements Core_ModuleInterface {
 ///       <arg name="urls" type="array()" brief="набор выражений, определяющих адреса, отклик для которых должен кешироваться" />
 ///     </args>
 ///     <body>
-  static public function Service(WS_ServiceInterface  $application, $dsn = '', array $urls = array()) {
-    return new WS_Middleware_Cache_Service($application, $dsn, $urls);
+  static public function Service(WS_ServiceInterface  $application) {
+    $args = func_get_args();
+    return Core::amake('WS.Middleware.Cache.Service', $args);
   }
 ///     </body>
 ///   </method>
@@ -58,10 +59,12 @@ class WS_Middleware_Cache_Service extends WS_MiddlewareService {
 ///       <arg name="urls" type="array()" brief="набор выражений, определяющих адреса, отклик для которых должен кешироваться" />
 ///     </args>
 ///     <body>
-  public function __construct(WS_ServiceInterface $application, $dsn = '', $urls = array()) {
+  public function __construct(WS_ServiceInterface $application) {
     parent::__construct($application);
-    $this->dsn  = $dsn;
-    $this->urls = $urls;
+    $args = func_get_args();
+    $this->dsn  = (isset($args[1]) && is_string($args[1])) ? $args[1] : '';
+    $this->urls = (isset($args[1]) && is_array($args[1])) ? $args[1] :
+                    ((isset($args[2]) && is_array($args[2])) ? $args[2] : array());
   }
 ///     </body>
 ///   </method>
