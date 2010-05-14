@@ -1,6 +1,6 @@
 <?php
-/// <module name="WS.DSL" version="0.3.0" maintainer="timokhin@techart.ru">
-///   <brief>Простейший builder для построения приложения из набора middleware-компонентов и </brief>
+/// <module name="WS.DSL" version="0.3.1" maintainer="timokhin@techart.ru">
+///   <brief>Простейший builder для построения приложения из набора middleware-компонентов и обработчиков запросов</brief>
 ///   <details>
 ///     <p>Модуль реализует класс WS.DSL.Builder, позволящий строить приложение из набора стандартных
 ///        компонент последовательными вызовами соответствующих методов.</p>
@@ -39,11 +39,11 @@
 ///     <p>Вызов метода, соответствующего терминальному обработчику, выполняет построение всей цепочки middleware-компонентов, 
 ///        определенной ранее, завершает ее соответствующим терминальным обработчиком и возвращает получившуюся цепочку. Параметры
 ///        метода соответствуют параметрам обработчика.</p>
-///     <p>Если необходимо указать свой собственный терминальный обработчик, это можно сделать с помощью вызова application().</p>
+///     <p>Если необходимо указать свой собственный терминальный обработчик, это можно сделать с помощью вызова handler().</p>
 ///     <p>Таким образом, следующий код создаст приложение, читающее конфигурацию из файла, поключащееся к базе данных и 
 ///        используюшее пользовательский обработчик для всего остального.</p>
 ///     <code>
-///       $application = WS_DSL::Builder()->
+///       $application = WS_DSL::application()->
 ///         config('../etc/config.php')->
 ///         cache('dummy://')->
 ///         application(new App_WS_ApplicationService());
@@ -60,34 +60,35 @@
 ///     </code>
 ///     <p>После этого можно использовать эти вызовы при построении приложения, например:</p>
 ///     <code>
-///       $application = WS_DSL::Builder()->
+///       $application = WS_DSL::application()->
 ///         config('../etc/config.php')->
 ///         app_middleware($parms)->
 ///         custom_app();
 ///     </code>
 ///   </details>
 ///   <implements interface="Core.ModuleInterface" />
+///   <depends supplier="WS.DSL.Builder" stereotype="creates" />
 class WS_DSL implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.3.0';
+  const VERSION = '0.3.1';
   
   const PREFIX  = 'WS.Middleware';
   const SUFFIX  = 'Service';
 ///   </constants>
 
   static public $middleware = array(
-    'environment'  => '.Environment.',
-    'config'       => '.Config.',
-    'db'           => '.DB.',
-    'orm'          => '.ORM.',
-    'cache'        => '.Cache.',
-    'status'       => '.Status.',
-    'template'     => '.Template.',
-    'session'      => 'WS.Session.',
-    'auth_session' => 'WS.Auth.Session.',
-    'auth_basic'   => 'WS.Auth.Basic.',
-    'auth_openid'  => 'WS.Auth.OpenID.');
+    'environment'     => '.Environment.',
+    'config'          => '.Config.',
+    'db'              => '.DB.',
+    'orm'             => '.ORM.',
+    'cache'           => '.Cache.',
+    'status'          => '.Status.',
+    'template'        => '.Template.',
+    'session'         => 'WS.Session.',
+    'auth_session'    => 'WS.Auth.Session.',
+    'auth_basic'      => 'WS.Auth.Basic.',
+    'auth_opensocial' => 'WS.Auth.OpenSocial.');
   
   static public $handlers = array(
     'application_dispatcher' => 'WS.REST.Dispatcher');
@@ -122,6 +123,13 @@ class WS_DSL implements Core_ModuleInterface {
 ///     </body>
 ///   </method>
 
+///   <method name="application" returns="WS.DSL.Builder" scope="class">
+///     <brief>Псевдоним для WS.DSL::Builder()</brief>
+///     <body>
+  static public function application() { return new WS_DSL_Builder(); }
+///     </body>
+///   </method>
+  
 ///   </protocol>
 }
 /// </class>
@@ -150,6 +158,20 @@ class WS_DSL_Builder implements Core_CallInterface {
 ///   </method>
   
 ///   </protocol>
+  
+///   <protocol name="building">
+
+///   <method name="handler" returns="WS.ServiceInterface">
+///     <args>
+///       <arg name="app" type="WS.ServiceInterface" />
+///     </args>
+///     <body>
+  public function handler(WS_ServiceInterface $app) { return $this->build_middleware($app); }
+///     </body>
+///   </method>
+  
+///   </protocol>
+    
   
 ///   <protocol name="supporting">
 
@@ -183,7 +205,8 @@ class WS_DSL_Builder implements Core_CallInterface {
 ///     <body>
   protected function make_handler($method, $parms) {
     if (isset(WS_DSL::$handlers[$method])) {
-      return $this->build_middleware(Core::amake($this->complete_name(WS_DSL::$handlers[$method]), $parms));
+      $this->load_module_for($c = $this->complete_name(WS_DSL::$handlers[$method]));
+      return $this->build_middleware(Core::amake($c, $parms));
     }
   }
 ///     </body>
@@ -197,15 +220,27 @@ class WS_DSL_Builder implements Core_CallInterface {
 ///     <body>
   protected function build_middleware(WS_ServiceInterface $app) {
     for ($i = count($this->middleware) - 1; $i >= 0; $i--) {
-      $c = $this->complete_name($this->middleware[$i]['class']);
-      Core::load(substr($c, 0, strrpos($c, '.')));
+      $this->load_module_for($c = $this->complete_name($this->middleware[$i]['class']));
       $app = Core::amake($c, array_merge(array($app), $this->middleware[$i]['parms']));
     }
+    $this->middleware = array();
     return $app;
   }
 ///     </body>
 ///   </method>
 
+///   <method name="load_module_for" access="protected">
+///     <brief>Подгружает модуль для указанного имени класса</brief>
+///     <args>
+///       <arg name="class" type="string" />
+///     </args>
+///     <body>
+  protected function load_module_for($class) { 
+    Core::load(substr($class, 0, strrpos(str_replace('..', '.', $class), '.'))); 
+  }
+///     </body>
+///   </method>
+  
 ///   <method name="complete_name" returns="string" access="protected">
 ///     <brief>Выполняет развертывание имени компонента</brief>
 ///     <args>
