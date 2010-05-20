@@ -1,10 +1,10 @@
 <?php
-/// <module name="Soap" maintainer="svistunov@techart.ru" version="0.1.0">
+/// <module name="SOAP" maintainer="svistunov@techart.ru" version="0.1.0">
 Core::load('XML');
 
-/// <class name="Soap" stereotype="module">
+/// <class name="SOAP" stereotype="module">
 ///   <implements interface="Core.ModuleInterface" />
-class Soap implements Core_ModuleInterface {
+class SOAP implements Core_ModuleInterface {
 ///   <constants>
   const VERSION = '0.1.0';
 ///   </constants>
@@ -18,7 +18,7 @@ class Soap implements Core_ModuleInterface {
 ///     </args>
 ///     <body>
   static public function Client($wsdl, $options = array()) {
-    return new Soap_Client($wsdl, $options);
+    return new SOAP_Client($wsdl, $options);
   }
 ///     </body>
 ///   </method>
@@ -26,7 +26,7 @@ class Soap implements Core_ModuleInterface {
 ///   <method name="XmlFixer">
 ///     <body>
   static public function XmlFixer() {
-    return new Soap_XmlFixer();
+    return new SOAP_XmlFixer();
   }
 ///     </body>
 ///   </method>
@@ -35,8 +35,8 @@ class Soap implements Core_ModuleInterface {
 }
 /// </class>
 
-/// <class name="Soap.Client" extends="SoapClient">
-class Soap_Client extends SoapClient {
+/// <class name="SOAP.Client" extends="SoapClient">
+class SOAP_Client extends SoapClient {
   protected $last_request;
   protected $last_args;
 
@@ -51,7 +51,7 @@ class Soap_Client extends SoapClient {
 ///     </args>
 ///     <body>
   public function __doRequest($request, $location, $version) {
-    $this->last_request = Soap::XmlFixer()->
+    $this->last_request = SOAP::XmlFixer()->
       fix_xml($request, $this->last_args);
     return parent::__doRequest($this->last_request,
       $location, $action, (int) $version);
@@ -83,8 +83,8 @@ class Soap_Client extends SoapClient {
 }
 /// </class>
 
-/// <class name="Soap.XmlFixer">
-class Soap_XmlFixer {
+/// <class name="SOAP.XmlFixer">
+class SOAP_XmlFixer {
 
 ///   <protocol name="creating">
 
