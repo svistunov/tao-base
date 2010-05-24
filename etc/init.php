@@ -1,4 +1,4 @@
 <?php
-include($_ENV['TAO_HOME'].'/lib/Core.php');
+include((($tao_home = getenv('TAO_HOME')) === false ? '.' : $tao_home).'/lib/Core.php');
 Core::initialize();
 ?>

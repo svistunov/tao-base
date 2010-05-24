@@ -1,5 +1,5 @@
 <?php
-/// <module name="Core" version="0.2.11" maintainer="timokhin@techart.ru">
+/// <module name="Core" version="0.2.12" maintainer="timokhin@techart.ru">
 /// <brief>Загрузчик модулей и вспомогательные утилиты.</brief>
 /// <details>
 ///   <p>Модуль Core реализует стандартный механизм динамической подгрузки  остальных модулей
@@ -124,7 +124,7 @@ class Core implements Core_ModuleInterface {
 
 ///   <constants>
   const MODULE        = 'Core';
-  const VERSION       = '0.2.11';
+  const VERSION       = '0.2.12';
   const RELEASE       =  10000;
   const PATH_VARIABLE = 'TAO_PATH';
 ///   </constants>
@@ -540,8 +540,8 @@ class Core implements Core_ModuleInterface {
 ///     <body>
   static private function parse_environment_paths() {
     $result = array();
-    if (isset($_ENV[self::PATH_VARIABLE]))
-      foreach (Core_Strings::split_by(';', $_ENV[self::PATH_VARIABLE]) as $rule)
+    if (($path_var = getenv(self::PATH_VARIABLE)) !== false)
+      foreach (Core_Strings::split_by(';', $path_var) as $rule)
         if ($m = Core_Regexps::match_with_results('{^([-A-Za-z0-9*][A-Za-z0-9_.]*):(.+)$}', $rule))
           $result[$m[1]] = $m[2];
     return $result;
