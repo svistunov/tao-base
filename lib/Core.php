@@ -1,6 +1,5 @@
 <?php
- error_reporting(E_ALL);
-/// <module name="Core" version="0.2.12" maintainer="timokhin@techart.ru">
+/// <module name="Core" version="0.2.13" maintainer="timokhin@techart.ru">
 /// <brief>Загрузчик модулей и вспомогательные утилиты.</brief>
 /// <details>
 ///   <p>Модуль Core реализует стандартный механизм динамической подгрузки  остальных модулей
@@ -125,7 +124,7 @@ class Core implements Core_ModuleInterface {
 
 ///   <constants>
   const MODULE        = 'Core';
-  const VERSION       = '0.2.12';
+  const VERSION       = '0.2.13';
   const RELEASE       =  10000;
   const PATH_VARIABLE = 'TAO_PATH';
 ///   </constants>
