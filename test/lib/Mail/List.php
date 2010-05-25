@@ -1,6 +1,6 @@
 <?php
 /// <module name="Test.Mail.List" version="0.1.0" maintainer="svistunov@techart.ru">
-Core::load('Dev.Unit', 'Mail.List');
+Core::load('Dev.Unit', 'Mail.List', 'IO.FS');
 
 /// <class name="Test.Mail.List" stereotype="module">
 ///   <implements interface="Dev.Unit.TestModuleInterface" />
@@ -13,8 +13,9 @@ class Test_Mail_List implements Dev_Unit_TestModuleInterface {
 ///   <protocol name="creating">
 
   static public function initialize() {
+  	IO_FS::mkdir('./test/data/Mail/List');
     Mail_List::options(array(
-      'root' => 'test/data/Mail/List/',
+      'root' => 'test/data/Mail/List',
       'headers' => array_merge(
                      Mail_List::option('headers'),
                      array('Message-ID'))

@@ -1,6 +1,6 @@
 <?php
 /// <module name="Test.Cache" version="0.1.0" maintainer="svistunov@techart.ru">
-Core::load('Dev.Unit', 'Cache', 'Time');
+Core::load('Dev.Unit', 'Cache', 'Time', 'IO.FS');
 
 /// <class name="Test.Cache" stereotype="module">
 ///   <implements interface="Dev.Unit.TestModuleInterface" />
@@ -84,6 +84,7 @@ class Test_Cache_FSCase extends Test_Cache_Case {
 ///   <method name="getCache" returns="Cache.Backend" scope="abstract" access="protected">
 ///     <body>
   protected function getCache() {
+  	IO_FS::mkdir('./test/data/Cache/');
     return Cache::connect('fs://./test/data/Cache/');
   }
 ///     </body>

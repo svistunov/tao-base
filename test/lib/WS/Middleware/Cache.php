@@ -1,6 +1,6 @@
 <?php
 /// <module name="Test.WS.Middleware.Cache" version="0.1.1" maintainer="svistunov@techart.ru">
-Core::load('Dev.Unit', 'WS.Middleware.Cache', 'Test.WS');
+Core::load('Dev.Unit', 'WS.Middleware.Cache', 'Test.WS', 'IO.FS');
 
 /// <class name="Test.WS.Middleware.Cache" stereotype="module">
 ///   <implements interface="Dev.Unit.TestModuleInterface" />
@@ -36,6 +36,7 @@ class Test_WS_Middleware_Cache_ServiceCase extends Dev_Unit_TestCase {
 ///   <method name="setup" access="protected">
 ///     <body>
   protected function setup() {
+  	IO_FS::mkdir('./test/data/WS/Middleware/Cache', 0755, true);
     $this->app = new Test_WS_SaveEnvApp();
     $this->service = WS_Middleware_Cache::Service(
       $this->app,
