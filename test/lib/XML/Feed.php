@@ -198,7 +198,7 @@ class Test_XML_Feed_ParserCase extends Dev_Unit_TestCase {
 ///     <body>
   public function test_url() {
     $agent = new Test_XML_Feed_Agent();
-    $feed  = XML_Feed::fetch('http://example.org/index.rss', $agent);
+    $feed  = XML_Feed::fetch($url = 'http://example.org/index.rss', $agent);
 
     $this->
       assert_equal(

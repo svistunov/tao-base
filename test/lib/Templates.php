@@ -110,7 +110,8 @@ class Test_Templates_TemplateCase extends Dev_Unit_TestCase {
   public function test_stringify() {
     $this->asserts->stringifying->
       assert_string($this->template, 'ok')->
-      assert_equal($this->template->called_methods['render_nested'][0], array('container' => null));
+      assert_equal($this->template->called_methods['render_nested'][0],
+        array('content' => null));
   }
 ///     </body>
 ///   </method>

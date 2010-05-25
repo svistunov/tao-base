@@ -119,7 +119,7 @@ class WS_Middleware_ORM_Service extends WS_MiddlewareService {
     }
     $connection->disconnect();
 
-    if ($error) throw $error;
+    if (isset($error)) throw $error;
 
     return $result;
   }

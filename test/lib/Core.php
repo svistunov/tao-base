@@ -398,7 +398,7 @@ class Test_Core_TypesCase extends Dev_Unit_TestCase {
     $this->
       assert_true(Core_types::is_string($str ='1,2,3'))->
       assert_true(Core_types::is_string($emp = ''))->
-      assert_true(Core_types::is_string($self = self))->
+      assert_true(Core_types::is_string($self = 'self'))->
       assert_false(Core_types::is_string($arr = array(1,2,3,4)));
   }
 ///     </body>

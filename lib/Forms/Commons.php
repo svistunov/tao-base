@@ -458,7 +458,7 @@ class Forms_Commons_ObjectSelectField
 ///     </args>
 ///     <body>
   public function load($source) {
-    $v = $source[$this->name];
+    $v = isset($source[$this->name]) ? $source[$this->name] : null;
     $this->value = isset($v) && isset($this->index[$v]) ?
       $this->items[$this->index[$v]] : null;
     return true;
@@ -475,7 +475,8 @@ class Forms_Commons_ObjectSelectField
   public function set_value($value) {
     $key = $this->key;
     if ($this->allows_null && $value == null)  $this->value =  null;
-    elseif (isset($this->index[$value->$key])) $this->value =  $this->items[$this->index[$value->$key]];
+    elseif (isset($value->$key) && isset($this->index[$value->$key]))
+      $this->value =  $this->items[$this->index[$value->$key]];
     return $this;
   }
 ///     </body>
@@ -501,7 +502,7 @@ class Forms_Commons_ObjectMultiSelectField extends Forms_Commons_CollectionField
 ///     </args>
 ///     <body>
   public function load($source) {
-    if (is_array($source[$this->name]) || $source[$this->name] instanceof Traversable) {
+    if (isset($source[$this->name]) && (is_array($source[$this->name]) || $source[$this->name] instanceof Traversable)) {
       $this->value = array();
       foreach ($source[$this->name] as $v)
        if (isset($this->index[$v])) {
@@ -760,7 +761,7 @@ class Forms_Commons_UploadField extends Forms_AbstractField {
 ///     <body>
   public function load($source) {
     // $upload = isset($source[$this->name]) ? $source[$this->name] : null;
-    if ($source[$this->name] instanceof Net_HTTP_Upload) $this->value = $source[$this->name];
+    if (isset($source[$this->name]) && $source[$this->name] instanceof Net_HTTP_Upload) $this->value = $source[$this->name];
     return true;
   }
 ///     </body>

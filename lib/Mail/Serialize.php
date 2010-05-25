@@ -130,7 +130,7 @@ class Mail_Serialize_Encoder {
     if ($msg instanceof Mail_Message_Message && $msg->is_multipart())
       $boundary = $msg->head['Content-Type']['boundary'];
 
-    if ($boundary) {
+    if (isset($boundary)) {
       if ($msg->preamble != '') $this->write($msg->preamble);
 
       foreach ($msg->body as $part) {

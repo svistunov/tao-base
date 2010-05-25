@@ -54,10 +54,13 @@ class WS_Adapters_Apache_Adapter implements WS_AdapterInterface {
 
     foreach ($response->headers->as_array(true) as $v) header($v);
 
-    if (Core_Types::is_iterable($response->body))
-      foreach ($response->body as $line) print($line);
+    $body = $response->body;
+
+    if (Core_Types::is_iterable($body))
+      foreach ($body as $line) print($line);
     else
-      print $response->body instanceof Core_StringifyInterface ? $response->body->as_string() : (string)$response->body;
+      print $body instanceof Core_StringifyInterface ?
+        $body->as_string() : (string) $body;
   }
 ///     </body>
 ///   </method>

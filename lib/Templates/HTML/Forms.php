@@ -196,7 +196,7 @@ class Templates_HTML_Forms implements Core_ModuleInterface, Templates_HelperInte
 ///     </args>
 ///     <body>
   public function help(Templates_HTML_Template $t, $text, array $attrs = array()) {
-    $attrs['class'] = ($attrs['class'] ? $attrs['class'].' ' : '').'help';
+    $attrs['class'] = (isset($attrs['class']) ? $attrs['class'].' ' : '').'help';
     return $t->content_tag('p',(string) $text, $attrs);
   }
 ///     </body>
@@ -412,7 +412,9 @@ class Templates_HTML_Forms implements Core_ModuleInterface, Templates_HelperInte
       'minute' => array('from' => 0, 'to' => 59)
       ) : array()) as $type => $v ) {
       $res .= $this->datetime_tag(
-        $t, $v['from'], $v['to'], $name, $type, $value, $v['attr'] ? array_merge($v['attr'] , $attributes) : $attributes, Core::if_not_set($v, 'tag', 'select'));
+        $t, $v['from'], $v['to'], $name, $type, $value, isset($v['attr']) ?
+          array_merge($v['attr'] , $attributes) :
+          $attributes, Core::if_not_set($v, 'tag', 'select'));
     }
     return $res;
   }
@@ -487,13 +489,14 @@ class Templates_HTML_Forms implements Core_ModuleInterface, Templates_HelperInte
     $attribute  = $field->attribute;
     $multi = array_search('multiple', $attributes, true) !== false;
 
-    foreach ($field->items as $item)
+    foreach ($field->items as $item) {
       $options[] = $t->
         content_tag('option',
           (string) $item->$attribute,
           array(
             'value'    => $item->$key,
-            'selected' => $multi ? isset($this->form[$name][$item->$key]) : $this->form[$name]->$key == $item->$key));
+            'selected' => $multi ? isset($this->form[$name][$item->$key]) :
+                $this->form[$name] && ($this->form[$name]->$key == $item->$key)));}
 
     return
       $t->
@@ -612,7 +615,7 @@ class Templates_HTML_Forms implements Core_ModuleInterface, Templates_HelperInte
 ///     </args>
 ///     <body>
   private function datetime_tag($t,$from, $to, $name, $type, Time_DateTime $value, $attributes, $tag = 'select') {
-    $res .= $t->tag(
+    $res = $t->tag(
       $tag,
       Core_Arrays::merge(
         array('name' => $this->field_name_for($name)."[$type]", 'id' => $this->field_id_for($name)."_$type"),

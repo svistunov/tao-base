@@ -326,7 +326,7 @@ class Test_Forms_CommonsCase extends Dev_Unit_TestCase {
       assert_equal($this->form['input_name'], 'default_input')->
       assert_true($this->form->process($this->request))->
       assert_equal($this->form['input_name'], '4758')->
-      assert_true(Core_Types::is_string($this->form['input_name']));
+      assert_true(Core_Types::is_string($s = $this->form['input_name']));
 
     $this->form['input_name'] = 1;
     $this->assert_equal($this->form['input_name'], '1');
@@ -344,7 +344,7 @@ class Test_Forms_CommonsCase extends Dev_Unit_TestCase {
       assert_equal($this->form['password_name'], '')->
       assert_true($this->form->process($this->request))->
       assert_equal($this->form['password_name'], '3678')->
-      assert_true(Core_Types::is_string($this->form['password_name']));
+      assert_true(Core_Types::is_string($s = $this->form['password_name']));
 
     $this->form['password_name'] = 'new password';
     $this->assert_equal($this->form['password_name'], 'new password');
@@ -362,7 +362,7 @@ class Test_Forms_CommonsCase extends Dev_Unit_TestCase {
       assert_equal($this->form['textarea_name'], 'default_textarea')->
       assert_true($this->form->process($this->request))->
       assert_equal($this->form['textarea_name'], '123')->
-      assert_true(Core_Types::is_string($this->form['textarea_name']))->
+      assert_true(Core_Types::is_string($s = $this->form['textarea_name']))->
       assert_write($this->form, array(
         'textarea_name' => 'body'
       ));

@@ -9,11 +9,15 @@ class WS_Session implements Core_ModuleInterface {
   const VERSION = '0.2.1';
 ///   </constants>
 
+  static private $store;
+
 ///   <protocol name="building">
 
 ///   <method name="Store" returns="WS.Session.Store" scope="class">
 ///     <body>
-  static public function Store() { return new WS_Session_Store(); }
+  static public function Store() {
+    return isset(self::$store) ?
+      self::$store : (self::$store = new WS_Session_Store()); }
 ///     </body>
 ///   </method>
 
@@ -256,7 +260,7 @@ class WS_Session_Flash
 ///       <arg name="index" type="string" />
 ///     </args>
 ///     <body>
-  public function offsetGet($index) { return $this->now[$index]; }
+  public function offsetGet($index) { return isset($this->now[$index]) ? $this->now[$index] : null; }
 ///     </body>
 ///   </method>
 

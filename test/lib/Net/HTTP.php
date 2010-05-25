@@ -298,9 +298,9 @@ class Test_Net_HTTP_RequestCase extends Dev_Unit_TestCase {
         'host' => 'test.com',
         'path' => '',
         'method' => Net_HTTP::POST,
-        'query' => '',
-        'parameters' => array('key' => 'value'),
-        'uri' => 'https://test.com',
+        'query' => 'arg=value',
+        'parameters' => array('key' => 'value', 'arg' => 'value'),
+        'uri' => 'https://test.com?arg=value',
       ))->
       assert_exists($this->request, array('session'));
   }

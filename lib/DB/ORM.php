@@ -1881,7 +1881,8 @@ class DB_ORM_SQLMapper extends DB_ORM_Mapper
       case 'where':
         if ($this->is_immutable) return $this->spawn()->__call($method, $args);
 
-        list($expr, $parms) = $args;
+        $expr = isset($args[0]) ? $args[0] : null;
+        $parms = isset($args[1]) ? $args[1] : null;
 
         if (is_array($expr)) $expr = '('.implode(') AND (', $expr).')';
         if ($parms !== null) $this->collect_binds($expr, $parms);
@@ -2598,7 +2599,7 @@ abstract class DB_ORM_Entity
       case $index === '__class':
         return Core_Types::real_class_name_for($this);
       default:
-        return $this->attrs[(string) $index];
+        return isset($this->attrs[(string) $index]) ? $this->attrs[(string) $index] : null;
     }
   }
 ///     </body>
@@ -2665,7 +2666,7 @@ abstract class DB_ORM_Entity
         if (method_exists($this, $method = "get_$property"))
           return $this->$method();
         else
-          return $this->attrs[$property];
+          return isset($this->attrs[$property]) ? $this->attrs[$property] : null;
     }
   }
 ///     </body>

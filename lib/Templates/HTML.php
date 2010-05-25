@@ -156,7 +156,7 @@ class Templates_HTML_Template
 ///     </args>
 ///     <body>
   public function end($block, $append = true) {
-    $this->content[$block] = ($append ? $this->content[$block] : '').ob_get_clean();
+    $this->content[$block] = ($append && isset($this->content[$block]) ? $this->content[$block] : '').ob_get_clean();
     return $this;
   }
 ///     </body>
@@ -171,10 +171,11 @@ class Templates_HTML_Template
 ///     </args>
 ///     <body>
   public function content($name, $content, $prepend = true) {
+    $old_content = isset($this->content[$name]) ? $this->content[$name] : '';
     if ($prepend)
-      $this->content[$name] = $content.$this->content[$name];
+      $this->content[$name] = $content.$old_content;
     else
-      $this->content[$name] .= $content;
+      $this->content[$name] = $old_content.$content;
     return $this;
   }
 ///     </body>

@@ -1106,7 +1106,7 @@ class Net_HTTP_Request
 
     //if ($this->uri['host']) $this->headers->host($this->uri['host']);
 //TODO: проверить обнуление query параметров
-      if ($parsed) $this->parse_query($parsed['query']);
+      if ($parsed && isset($parsed['query'])) $this->parse_query($parsed['query']);
     return $this;
   }
 ///     </body>

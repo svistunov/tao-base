@@ -170,7 +170,7 @@ class Test_JSON_Object extends Test_JSON_ParentObject implements Object_AttrList
 ///     <body>
   public function __construct() {
     $args = func_get_args();
-    parent::__construct($args[0]);
+    parent::__construct(isset($args[0]) ? $args[0] : null);
     $this->collection = Core::hash();
   }
 ///     </body>

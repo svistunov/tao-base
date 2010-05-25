@@ -835,7 +835,7 @@ class Test_WS_REST_DispatcherCase extends Dev_Unit_TestCase {
 ///     <body>
   protected function setup() {
     $this->adapter = new Test_WS_Adapter();
-    $this->dispatcher = WS_DSL::application_dispatcher(array(
+    $this->dispatcher = WS_DSL::Builder()->application_dispatcher(array(
       'news' => 'Test.WS.REST.NewsApp',
       'video' => 'Test.WS.REST.VideoApp',
     ), 'Test.WS.REST.DefaultApp');

@@ -416,7 +416,8 @@ class Fn_Joiner extends Fn_AbstractTransformer {
 ///     <brief>Переходит к следущему итератору</brief>
 ///     <body>
   private function next_part() {
-    return ($part = $this->source->current()) ?
+    $part = $this->source->valid() ? $this->source->current() : null;
+    return ($part) ?
     ($part instanceof Iterator) ? $part : (($part instanceof IteratorAggregate) ?
     $part->getIterator() : Core::with(new ArrayObject((array) $part))->getIterator()) : null;
   }

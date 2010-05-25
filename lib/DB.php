@@ -146,12 +146,12 @@ class DB_DSN implements Core_PropertyAccessInterface, Core_StringifyInterface {
 ///     </args>
 ///     <body>
   static public function parse($string) {
-    list($main, $extra) = explode('?', (string) $string);
+    $parts = explode('?', (string) $string);
     $parms = array();
 
-    if ($extra) parse_str($extra, $parms);
+    if (isset($parts[1])) parse_str($parts[0], $parts[1]);
 
-    if ($p = Core_Regexps::match_with_results(DB_DSN::FORMAT, (string) $main))
+    if ($p = Core_Regexps::match_with_results(DB_DSN::FORMAT, (string) $parts[0]))
       return new DB_DSN(array(
         'type'     => $p[1],
         'user'     => $p[2],
@@ -159,7 +159,7 @@ class DB_DSN implements Core_PropertyAccessInterface, Core_StringifyInterface {
         'host'     => $p[4],
         'port'     => $p[5],
         'database' => $p[6],
-        'scheme'   => (string) $p[7],
+        'scheme'   => isset($p[7]) ? (string) $p[7] : '',
         'parms'    => $parms));
     else
       throw new DB_ConnectionException("Bad DSN: $string");

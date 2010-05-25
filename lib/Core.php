@@ -1,4 +1,5 @@
 <?php
+ error_reporting(E_ALL);
 /// <module name="Core" version="0.2.12" maintainer="timokhin@techart.ru">
 /// <brief>Загрузчик модулей и вспомогательные утилиты.</brief>
 /// <details>
@@ -252,7 +253,7 @@ class Core implements Core_ModuleInterface {
       if (count($a) != count($b)) return false;
 
       foreach ($a as $k => $v)
-        if (!Core::equals($v, $b[$k])) return false;
+        if ((isset($a[$k]) && !isset($b[$k])) || !Core::equals($v, $b[$k])) return false;
       return true;
     }
 
@@ -2448,7 +2449,7 @@ class Core_Arrays {
 ///     <body>
   static public function deep_merge_update(array $what, array $with) {
     foreach (array_keys($with) as $k)
-      $what[$k] = (is_array($what[$k]) && is_array($with[$k])) ?
+      $what[$k] = (isset($what[$k]) && is_array($what[$k]) && is_array($with[$k])) ?
         self::deep_merge_update($what[$k], $with[$k]) : $with[$k];
     return $what;
   }
@@ -2471,7 +2472,7 @@ class Core_Arrays {
 ///     <body>
   static function deep_merge_append(array $what, array $with) {
     foreach (array_keys($with) as $k) {
-      $what[$k] = (is_array($what[$k]) && is_array($with[$k])) ?
+      $what[$k] = (isset($what[$k]) && is_array($what[$k]) && is_array($with[$k])) ?
         self::deep_merge_append($what[$k], $with[$k]) :
         (isset($what[$k]) ? array_merge((array) $what[$k], (array) $with[$k]) : $with[$k]);
     }
@@ -2489,7 +2490,7 @@ class Core_Arrays {
 ///     <body>
   static public function deep_merge_update_inplace(array &$what, array $with) {
     foreach (array_keys($with) as $k) {
-      if (is_array($what[$k]) && is_array($with[$k]))
+      if (isset($what[$k]) && is_array($what[$k]) && is_array($with[$k]))
         self::deep_merge_update_inplace($what[$k], $with[$k]);
       else
         $what[$k] = $with[$k];

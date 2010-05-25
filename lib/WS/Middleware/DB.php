@@ -76,7 +76,6 @@ class WS_Middleware_DB_Service extends WS_MiddlewareService {
 
     if (isset($env->config) && $env->config->query_log->path)
       $env->db->listener(
-//  FIXME: missing module Dev_DB_Log
         Dev_DB_Log::Logger(IO_FS::FileStream($env->config->query_log->path, 'a'), $env->config->query_log->explain)->
           write('= '.$env->request->uri."\n\n"));
 
@@ -89,7 +88,7 @@ class WS_Middleware_DB_Service extends WS_MiddlewareService {
     $env->db->disconnect();
 
 
-    if ($error) throw $error;
+    if (isset($error)) throw $error;
     else return $result;
   }
 ///     </body>

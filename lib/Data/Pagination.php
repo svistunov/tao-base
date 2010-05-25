@@ -141,7 +141,7 @@ class Data_Pagination_Pager
 ///     <body>
   public function offsetUnset($index) {
     throw $this->offsetExists($index) ?
-      new Core_ReadOnlyIndexedPropertyException($idx) :
+      new Core_ReadOnlyIndexedPropertyException($index) :
       new Core_MissingIndexedPropertyException($index);
   }
 ///     </body>
