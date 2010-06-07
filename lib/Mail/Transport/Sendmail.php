@@ -1,5 +1,5 @@
 <?php
-/// <module name="Mail.Transport.Sendmail" version="0.2.0" maintainer="timokhin@techart.ru">
+/// <module name="Mail.Transport.Sendmail" version="0.2.1" maintainer="timokhin@techart.ru">
 ///   <brief>Модуль для отправки сообщения с помощью стандартной утилиты sendmail</brief>
 
 Core::load('Mail.Transport');
@@ -11,11 +11,11 @@ class Mail_Transport_Sendmail implements Core_ConfigurableModuleInterface {
 
 ///   <constants>
   const MODULE  = 'Mail.Transport.Sendmail';
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
 ///   </constants>
 
   static protected $options = array(
-    'binary' => '../bin/sendmail',
+    'binary' => 'sendmail',
     'flags'  => '-t -i');
 
 ///   <protocol name="creating">
