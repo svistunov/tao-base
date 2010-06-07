@@ -1,5 +1,5 @@
 <?php
-/// <module name="Mail.Message" maintainer="timokhin@techart.ru" version="0.2.3">
+/// <module name="Mail.Message" maintainer="timokhin@techart.ru" version="0.2.5">
 ///   <brief>Объектное представление почтового сообщения</brief>
 ///   <details>
 ///   <p>Модуль определяет классы, соответствующие таким элементам почтового сообщения, как
@@ -16,7 +16,7 @@ Core::load('Object', 'Fn', 'IO.FS', 'Mail');
 class Mail_Message implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.3';
+  const VERSION = '0.2.5';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -88,8 +88,13 @@ class Mail_Message_Field
     'mime' => 'MIME', 'ldap' => 'LDAP', 'soap' => 'SOAP', 'swe'  => 'SWE',
     'bcc'  => 'BCC',  'cc'   => 'CC',   'id' => 'ID');
 
+  const EMAIL_REGEXP = '#(?:[a-zA-Z0-9_\.\-\+])+\@(?:(?:[a-zA-Z0-9\-])+\.)+(?:[a-zA-Z0-9]{2,4})#';
+  const EMAIL_NAME_REGEXP = "{(?:(.+)\s?)?(<?(?:[a-zA-Z0-9_\.\-\+])+\@(?:(?:[a-zA-Z0-9\-])+\.)+(?:[a-zA-Z0-9]{2,4})>?)$}Ui";
+  const ATTR_REGEXP = '{;\s*\b([a-zA-Z0-9_\.\-]+)\s*\=\s*(?:(?:"([^"]*)")|(?:\'([^\']*)\')|([^;\s]*))}i';
+
   protected $name;
-  protected $body;
+  protected $value;
+  protected $attrs = array();
 
 ///   <protocol name="creating">
 
@@ -98,9 +103,10 @@ class Mail_Message_Field
 ///     <args>
 ///       <arg name="name" type="string" brief="имя поля" />
 ///       <arg name="body" type="string" brief="содержимое поля" />
+///       <arg name="attrs" type="array" brief="аттрибуты поля" />
 ///     </args>
 ///     <body>
-  public function __construct($name, $body) {
+  public function __construct($name, $body, $attrs = array()) {
     $this->name  = $this->canonicalize($name);
     $this->set_body($body);
   }
@@ -135,8 +141,7 @@ class Mail_Message_Field
 ///     </args>
 ///     <body>
   public function offsetGet($index) {
-    if (preg_match($this->regexp_for_attribute($index), $this->body, $m))
-      return $m[1] ? $m[1] : ($m[2] ? $m[2] : ($m[3] ? $m[3] : null));
+    return isset($this->attrs[$index]) ? $this->attrs[$index] : null;
   }
 ///     </body>
 ///   </method>
@@ -149,12 +154,7 @@ class Mail_Message_Field
 ///     </args>
 ///     <body>
   public function offsetSet($index, $value) {
-    $value = strpos($value, ' ') === false ? $value : "\"$value\"";
-
-    if (isset($this[$index]))
-      $this->body  = preg_replace($this->regexp_for_attribute($index), "$index=$value;", $this->body);
-    else
-      $this->body = rtrim($this->body, "; ")."; $index=$value";
+    $this->attrs[(string) $index] = $value;
     return $this;
   }
 ///     </body>
@@ -167,7 +167,7 @@ class Mail_Message_Field
 ///     </args>
 ///     <body>
   public function offsetExists($index) {
-    return preg_match($this->regexp_for_attribute($index), $this->body);
+    return isset($this->attrs[$index]);
   }
 ///     </body>
 ///   </method>
@@ -179,7 +179,7 @@ class Mail_Message_Field
 ///     </args>
 ///     <body>
   public function offsetUnset($index) {
-    $this->body = rtrim(preg_replace($this->regexp_for_attribute($index), '', $this->body), "; ");
+    unset($this->attrs[$index]);
   }
 ///     </body>
 ///   </method>
@@ -189,9 +189,9 @@ class Mail_Message_Field
 ///   <protocol name="stringifying" interface="Core.StringifyInterface">
 
 ///     <method name="as_string" returns="string">
-///     <brief>Возвращает поле ввиде строки</brief>
+///     <brief>Возвращает поле ввиде закодированной строки</brief>
 ///       <body>
-  public function as_string() { return $this->body; }
+  public function as_string() { return $this->encode(); }
 ///       </body>
 ///     </method>
 
@@ -210,31 +210,95 @@ class Mail_Message_Field
 ///     <brief>Кодирует поле</brief>
 ///     <body>
 //TODO: iconv_mime_encode не верно кодирует длинные строки
-//TODO: нужно ли разбивать строку на несколько в случае
-//        MIME::is_printable($this->body) && strlen($this->body) > MIME::LINE_LENGTH
   public function encode() {
-    $email_regexp = '(?:[a-zA-Z0-9_\.\-\+])+\@(?:(?:[a-zA-Z0-9\-])+\.)+(?:[a-zA-Z0-9]{2,4})';
-
-    if (MIME::is_printable($this->body))
-      $body = $this->body;
-    else {
-      $result = array();
-      foreach ((($is_address_line = preg_match("#$email_regexp#", $this->body)) ?
-                  explode(',', $this->body) : array($this->body)) as $chunk) {
-        if (preg_match("{(?:(.+)\s?)?(<?$email_regexp>?)$}Ui", $chunk, $m)) {
-          $result[] =
-            ($m[1] ?
-               preg_replace('{^: }', '',
-                  iconv_mime_encode('', $m[1], array('scheme' => 'B', 'input-charset' => 'UTF-8', 'output-charset' => 'UTF-8', "line-break-chars" => MIME::LINE_END))) :
-               '').' '.$m[2];
-        } else {
-          $result[] = preg_replace('{^: }', '',
-                  iconv_mime_encode('', $chunk, array('scheme' => 'B', 'input-charset' => 'UTF-8', 'output-charset' => 'UTF-8', "line-break-chars" => MIME::LINE_END)));
-        }
-      }
-      $body = implode(','.MIME::LINE_END, $result);
+    $body = $this->name.': '.$this->encode_value($this->value, false).';';
+    foreach ($this->attrs as $index => $value) {
+      $attr = $this->encode_attr($index, $value);
+      $delim = (($this->line_length($body) + strlen($attr) + 1) >= MIME::LINE_LENGTH) ?
+          "\n " : ' ';
+      $body .= $delim.$attr;
     }
-    return "{$this->name}: $body";
+    return substr($body, 0, strlen($body) - 1);
+  }
+///     </body>
+///   </method>
+
+///   <method name="encode_attr" access="protected" returns="string" >
+///     <brief>Кодирует аттрибут поля</brief>
+///     <args>
+///       <arg name="index" type="string" />
+///     </args>
+///     <body>
+  protected function encode_attr($index, $value) {
+    $value = $this->encode_value($value);
+    switch (true) {
+      case $index == 'boundary': case strpos($value, ' '):
+        return "$index=\"$value\";";
+      default:
+        return "$index=$value;";
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="encode_value" access="protected" returns="string" >
+///     <brief>Кодирует значение поля или значение аттрибута</brief>
+///     <args>
+///       <arg name="value" type="string" />
+///       <arg name="quote" type="boolean" default="true" />
+///     </args>
+///     <body>
+  protected function encode_value($value, $quote = true) {
+    if ($this->is_address_line($value))
+      return $this->encode_email($value);
+    else
+      return $this->encode_mime($value, $quote);
+  }
+///     </body>
+///   </method>
+
+///   <method name="encode_email" access="protected" returns="string">
+///     <brief>Кодирует строку email адресов</brief>
+///     <description>
+///       Преобразует строку вида "Серж &lt;svistunov@techart.ru&gt;, Max &lt;timokhin@techart.ru&gt;"
+///       в строрку вида "=?UTF-8?B?0KHQtdGA0LY=?= &lt;svistunov@techart.ru&gt;,
+///         Max &lt;timokhin@techart.ru&gt;"
+///     </description>
+///     <args>
+///       <arg name="value" type="string" brief="строка для кодирования" />
+///     </args>
+///     <body>
+  protected function encode_email($value) {
+    $result = array();
+    foreach (explode(',', $value) as $k => $v)
+      if (preg_match(self::EMAIL_NAME_REGEXP, $v, $m))
+        $result[] = ($m[1] ? $this->encode_mime(trim($m[1]), false) : '').' '.$m[2];
+      else
+        return $this->encode_mime($value, false);
+    return implode(','.MIME::LINE_END.' ', $result);
+  }
+///     </body>
+///   </method>
+
+///   <method name="encode_mime">
+///     <brief>Обертка над iconv_mime_encode</brief>
+///     <args>
+///       <arg name="value" type="string" />
+///       <arg name="quote" type="boolean" default="false" />
+///     </args>
+///     <body>
+  protected function encode_mime($value, $quote = true) {
+    $q = $quote ? '"' : '';
+    return !MIME::is_printable($value) ? $q.preg_replace('{^: }', '', iconv_mime_encode(
+      '',
+      $value,
+      array(
+        'scheme' => 'B',
+        'input-charset' => 'UTF-8',
+        'output-charset' => 'UTF-8',
+        "line-break-chars" => MIME::LINE_END
+      )
+    )).$q : MIME::split($value);
   }
 ///     </body>
 ///   </method>
@@ -242,6 +306,30 @@ class Mail_Message_Field
 ///   </protocol>
 
 ///   <protocol name="supporting">
+
+///   <method name="line_length" access="private" returns="int">
+///     <brief>Возвращает последней строки в тексте</brief>
+///     <args>
+///       <arg name="txt" type="string" />
+///     </args>
+///     <body>
+  private function line_length($txt) {
+    return strlen(end(explode("\n", $txt)));
+  }
+///     </body>
+///   </method>
+
+///   <method name="is_address_line" access="protected" returns="boolean">
+///     <brief>Проверяет, является ли строка tmail адресом</brief>
+///     <args>
+///       <arg name="line" type="string" />
+///     </args>
+///     <body>
+  protected function is_address_line($line) {
+    return preg_match(self::EMAIL_REGEXP, $line);
+  }
+///     </body>
+///   </method>
 
 ///   <method name="set_name" access="protected">
 ///     <brief>Установка свойства name извне запрещена</brief>
@@ -266,36 +354,61 @@ class Mail_Message_Field
 ///     </args>
 ///     <body>
   protected function set_body($body) {
+    $this->attrs = array();
     if (is_array($body)) {
-      if (isset($body[0])) $this->body = (string) $body[0];
       foreach ($body as $k => $v)
-        if (is_string($k)) $this[$k] = $v;
-    } else {
-       $this->body = (string) $body;
-    }
-    return $this->body;
+        switch (true) {
+          case is_string($k):
+            $this[$k] = $v;
+            break;
+          case is_int($k):
+            $this->value = (string) $v;
+        }
+    } else
+      $this->from_string((string) $body);
+    return $this;
   }
 ///     </body>
 ///   </method>
 
-///   <method name="get_value" returns="string" access="protected">
-///     <brief>Возвращает значение поля</brief>
+///   <method name="from_string" returns="Mail.Message.Field">
+///     <brief>Производит разбор строки, извлекая аттрибуты</brief>
+///     <args>
+///       <arg name="body" type="string" />
+///     </args>
 ///     <body>
-//TODO: считать ли пробел разделителем?
-  protected function get_value() {
-    return preg_match('{^[^\s;]+}', $this->body, $m) ? $m[0] : $this->body;
+  public function from_string($body) {
+    if (preg_match_all(self::ATTR_REGEXP, $body, $m, PREG_SET_ORDER)) {
+      foreach ($m as $res) {
+        $v = $res[2] ? $res[2] : ($res[3] ? $res[3] : ($res[4] ? $res[4] : null));
+        if (isset($res[1]) && $v)
+          $this[$res[1]] = $v;
+      }
+      $this->value = trim(substr($body, 0, strpos($body, ';')));
+    } else
+    $this->value = $body;
+    return $this;
+  }
+///     </body>
+///   </method>
+
+///   <method name="get_body" returns="string" access="protected">
+///     <body>
+  protected function get_body() {
+    return $this->encode();
   }
 ///     </body>
 ///   </method>
 
 ///   <method name="set_value" returns="string" access="protected">
 ///     <brief>Устанавливает значение поля</brief>
+///     <args>
+///       <arg name="value" type="string" />
+///     </args>
 ///     <body>
   protected function set_value($value) {;
-    $this->body = (preg_match('{^[^\s;]+}', $this->body) ?
-      preg_replace('{^([^\s;]+)}', $value, $this->body) :
-      $value);
-    return $this->value;
+    $this->value = (string) $value;
+    return $this;
   }
 ///     </body>
 ///   </method>
@@ -321,18 +434,6 @@ class Mail_Message_Field
 ///     </body>
 ///   </method>
 
-///   <method name="regexp_for_attribute" returns="string" access="protected">
-///     <brief>Возвращает регулярное выражение для поиска атрибута</brief>
-///     <args>
-///       <arg name="name" type="string" brief="имя атрибута" />
-///     </args>
-///     <body>
-  protected function regexp_for_attribute($name) {
-    return '{\b'.$name.'\s*\=\s*(?:(?:"([^"]*)")|(?:\'([^\']*)\')|([^;\s]*));?}i';
-  }
-///     </body>
-///   </method>
-
 ///   </protocol>
 
 ///   <protocol name="quering">
@@ -343,12 +444,13 @@ class Mail_Message_Field
 ///     <body>
   public function equals($to) {
     return $to instanceof self &&
-      $this->body == $to->body &&
-      $this->name == $to->name;
+      $this->value == $to->value &&
+      $this->name == $to->name &&
+      Core::equals($this->attrs, $to->attrs);
   }
 ///     </body>
 ///   </method>
-///</protocol>
+///   </protocol>
 }
 /// </class>
 
@@ -671,6 +773,7 @@ class Mail_Message_Part
 
     $this->head['Content-Type'] = array($file->content_type, 'name' => ($name ? $name : $file->name));
     $this->head['Content-Transfer-Encoding'] = $file->mime_type->encoding;
+    $this->head['Content-Disposition'] = 'attachment';
 
     $this->body = $file;
 
@@ -956,7 +1059,7 @@ class Mail_Message_Message
 
     $this->head['Content-Type'] = array(
      'Multipart/'.ucfirst(strtolower($type)),
-     'boundary' => '"'.($boundary ? $boundary : MIME::boundary()).'"');
+     'boundary' => ($boundary ? $boundary : MIME::boundary()));
 
     return $this;
   }
@@ -1116,7 +1219,7 @@ class Mail_Message_Message
 ///     <body>
   public function is_multipart() {
     return Core_Strings::starts_with(
-      Core_Strings::downcase($this->head['Content-Type']), 'multipart'); }
+      Core_Strings::downcase($this->head['Content-Type']->value), 'multipart'); }
 ///     </body>
 ///   </method>
 

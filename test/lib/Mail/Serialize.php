@@ -1,13 +1,13 @@
 <?php
-/// <module name="Test.Mail.Serialize" version="0.1.1" maintainer="svistunov@techart.ru">
-Core::load('Dev.Unit', 'Mail.Serialize');
+/// <module name="Test.Mail.Serialize" version="0.1.2" maintainer="svistunov@techart.ru">
+Core::load('Dev.Unit', 'Mail.Serialize', 'Mail.Transport.Sendmail');
 
 /// <class name="Test.Mail.Serialize" stereotype="module">
 ///   <implements interface="Dev.Unit.TestModuleInterface" />
 class Test_Mail_Serialize implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.1';
+  const VERSION = '0.1.2';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -47,15 +47,16 @@ X-Mozilla-Status2: 10000000
 X-Mozilla-Keys:
 Return-Path: <svistunov@techart.ru>
 Received: from [192.168.0.109] (svistunov.techart.intranet [192.168.0.109])
-  by mx.techart.ru (8.14.1/8.14.1) with ESMTP id o1I7RCos040367
-  for <svistunov@techart.ru>; Thu, 18 Feb 2010 10:27:12 +0300 (MSK)
-  (envelope-from svistunov@techart.ru)
+ by mx.techart.ru (8.14.1/8.14.1) with ESMTP id o1I7RCos040367
+ for <svistunov@techart.ru>; Thu, 18 Feb 2010 10:27:12 +0300 (MSK)
+ (envelope-from svistunov@techart.ru)
 Message-ID: <4B7CEBF8.7060901@techart.ru>
 Date: Thu, 18 Feb 2010 10:27:52 +0300
 From: svistunov <svistunov@techart.ru>
 User-Agent: Thunderbird 2.0.0.23 (X11/20090817)
 MIME-Version: 1.0
-To: svistunov@techart.ru
+To: =?UTF-8?B?0KHQtdGA0LY=?= <svistunov@techart.ru>,
+ Max <timokhin@techart.ru>
 Subject: =?UTF-8?B?0KLQtdGB0YLQvtCy0L7QtSDRgdC+0L7QsdGJ0LXQvdC40LU=?=
 Content-Type: Multipart/Mixed;
  boundary="------------050009090007080401070000"
@@ -96,10 +97,9 @@ Content-Transfer-Encoding: 8bit
 
 --------------050009090007080401070000
 Content-Type: application/x-rar;
- name="Attach.rar"
+ name="=?UTF-8?B?0JLQu9C+0LbQtdC90LjQtS5yYXI=?="
 Content-Transfer-Encoding: base64
-Content-Disposition: inline;
- filename="Attach.rar"
+Content-Disposition: attachment
 
 UmFyIRoHAM+QcwAADQAAAAAAAABC03QggCsAKwAAACQAAAADE7nyVTZTUjwdMwsApIEAAE1l
 c3NhZ2UudHh0ERVUvhQInkKKsDBZFvCD6g3OyMWZgkItu1UmXNDFDPFSKv8OhZRMfxQdtMQ9
@@ -132,11 +132,11 @@ EOF;
       field('From', 'svistunov <svistunov@techart.ru>')->
       field('User-Agent', 'Thunderbird 2.0.0.23 (X11/20090817)')->
       field('MIME-Version', '1.0')->
-      field('To', 'svistunov@techart.ru')->
+      field('To', 'Серж <svistunov@techart.ru>, Max <timokhin@techart.ru>')->
       field('Subject', 'Тестовое сообщение')->
       preamble('This is a multi-part message in MIME format.')->
-      multipart_mixed("------------050009090007080401070000")->
-      field('Status', '')->
+      multipart_mixed('------------050009090007080401070000')->
+      field('Status', null)->
       part(
         Mail_Message::Message(true)->
           multipart_alternative('------------020204060805040402080303')->
@@ -176,8 +176,7 @@ EOF
       )->
       part(
         Mail_Message::Part()->
-          file('test/data/Mail/Serialize/Attach.rar', '"Attach.rar"')->
-          field('Content-Disposition', array('inline', 'filename' => '"Attach.rar"'))
+          file('test/data/Mail/Serialize/Attach.rar', 'Вложение.rar')
       );
 
   }
@@ -191,7 +190,6 @@ EOF
       $this->message_from_decoder,
       $this->message_manual_constructed
     );
-
 
     //TODO: сравнение с учетом переноса строк
     $this->assert_equal(

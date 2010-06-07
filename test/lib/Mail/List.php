@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.Mail.List" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.Mail.List" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'Mail.List', 'IO.FS');
 
 /// <class name="Test.Mail.List" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'Mail.List', 'IO.FS');
 class Test_Mail_List implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="creating">
@@ -110,7 +110,7 @@ class Test_Mail_List_Case extends Dev_Unit_TestCase {
       $k = $n + 1;
       $this->assert_equal(
             $f->load(),
-            "To: test$k@techart.ru\n".
+            "To:  test$k@techart.ru\n".
             "Message-ID: $k\n".
             "-test_param: value$k\n"
       );

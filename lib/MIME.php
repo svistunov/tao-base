@@ -1,5 +1,5 @@
 <?php
-/// <module name="MIME" version="0.2.3" maintainer="timokhin@techart.ru">
+/// <module name="MIME" version="0.2.4" maintainer="timokhin@techart.ru">
 ///   <brief>Минимальная поддержка работы с MIME</brief>
 ///   <details>
 ///     <p>Модуль содержит небольшую базу данных наиболее распространенных MIME-типов и реализует
@@ -37,7 +37,7 @@ class MIME implements Core_ModuleInterface {
 
 ///   <constants>
   const MODULE  = 'MIME';
-  const VERSION = '0.2.3';
+  const VERSION = '0.2.4';
 
   const ENCODING_B64  = 'base64';
   const ENCODING_QP   = 'quoted-printable';
@@ -325,6 +325,19 @@ class MIME implements Core_ModuleInterface {
       '/[^\x21-\x3C\x3E-\x7E]/',
       create_function('$x', 'return strtoupper(sprintf("=%02x", ord($x[0])));'), $text);
     return (is_null($length) || $length === 0) ? $text :  preg_replace('/(.{'.($length-4).'}[^=]{0,3})/', '$1'."=\n", $text);
+  }
+///     </body>
+///   </method>
+
+///   <method name="split" returns="string" scope="static">
+///     <brief>Обертка над wordwrap</brief>
+///     <args>
+///       <arg name="value" type="string" />
+///       <arg name="length" type="int" default="MIME::LINE_LENGTH" />
+///     </args>
+///     <body>
+  static public function split($value , $length = MIME::LINE_LENGTH) {
+    return wordwrap($value, $length, MIME::LINE_END.' ', true);
   }
 ///     </body>
 ///   </method>

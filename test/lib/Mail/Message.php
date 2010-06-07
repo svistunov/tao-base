@@ -1,5 +1,5 @@
 <?php
-/// <module name="Test.Mail.Message" version="0.1.0" maintainer="svistunov@techart.ru">
+/// <module name="Test.Mail.Message" version="0.1.1" maintainer="svistunov@techart.ru">
 Core::load('Dev.Unit', 'Mail.Message');
 
 /// <class name="Test.Mail.Message" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Dev.Unit', 'Mail.Message');
 class Test_Mail_Message implements Dev_Unit_TestModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 ///   <protocol name="testing">
@@ -66,13 +66,13 @@ class Test_Mail_Message_FieldCase extends Dev_Unit_TestCase {
       ))->
       assert_equal(
         $this->field->body,
-        'Multipart/Alternative; boundary=1234; test="new value"; key="value for key"')->
+        'Content-Type: Multipart/Alternative; boundary="1234"; test="new value";'."\n".' key="value for key"')->
       assert_nullable($this->field, array(
         'test', 'key', 'boundary'
       ))->
       assert_equal(
         $this->field->body,
-        "Multipart/Alternative");
+        "Content-Type: Multipart/Alternative");
   }
 ///     </body>
 ///   </method>
@@ -83,7 +83,7 @@ class Test_Mail_Message_FieldCase extends Dev_Unit_TestCase {
     $this->asserts->stringifying->
       assert_string(
         $this->field,
-        "Multipart/Alternative; boundary=\"=_0e022aded6513529c1be211d501cd986\"; test = 'value'");
+        "Content-Type: Multipart/Alternative;\n boundary=\"=_0e022aded6513529c1be211d501cd986\"; test=value");
   }
 ///     </body>
 ///   </method>
@@ -97,20 +97,19 @@ class Test_Mail_Message_FieldCase extends Dev_Unit_TestCase {
       ))->
       assert_read($this->field, $r = array(
         'value' => 'Multipart/Alternative',
-        'body' => 'Multipart/Alternative;'.
+        'body' => 'Content-Type: Multipart/Alternative;'."\n".
                   ' boundary="=_0e022aded6513529c1be211d501cd986";'.
-                  ' test = \'value\''
+                  ' test=value'
       ))->
       assert_write($this->field, $w = array(
-        'value' => 'test_value',
-        'body' => 'body body'
+        'value' => 'test_value'
       ));
 
     $this->field->body(array('_value_', 'key1' => 'value1', 'key2' => 'value2'));
     $this->
       assert_equal(
         $this->field->body,
-        "_value_; key1=value1; key2=value2"
+        "Content-Type: _value_; key1=value1; key2=value2"
         );
   }
 ///     </body>
@@ -122,7 +121,7 @@ class Test_Mail_Message_FieldCase extends Dev_Unit_TestCase {
     $this->
       assert_equal(
         $this->field->encode(),
-        'Content-Type: Multipart/Alternative; boundary="=_0e022aded6513529c1be211d501cd986"; test = \'value\''
+        'Content-Type: Multipart/Alternative;'."\n".' boundary="=_0e022aded6513529c1be211d501cd986"; test=value'
       );
     $this->field->body('Длинный заголов письма кодируется не правильно в PHP, баг iconv_mime_encode');
     $this->
@@ -142,7 +141,7 @@ class Test_Mail_Message_FieldCase extends Dev_Unit_TestCase {
       assert_equal(
         $this->field->encode(),
         "Content-Type: =?UTF-8?B?0JLQsNGB0Y8=?= <vasya@techart.ru>,\n".
-        "=?UTF-8?B?INCf0LXRgtGP?= petya@techart.ru"
+        " =?UTF-8?B?0J/QtdGC0Y8=?= petya@techart.ru"
       );
 
   }
@@ -485,7 +484,7 @@ class Test_Mail_Message_MessageCase extends Dev_Unit_TestCase {
     $this->message->multipart('test type', 'test_boundary');
     $this->assert_equal(
       $this->message->head['content-type'],
-      Mail_Message::Field('content-type', array('Multipart/Test type', 'boundary' => $b = '"test_boundary"'))
+      Mail_Message::Field('content-type', array('Multipart/Test type', 'boundary' => $b = 'test_boundary'))
     )->
     assert_true($this->message->is_multipart());
 

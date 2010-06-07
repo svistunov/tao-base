@@ -1,5 +1,5 @@
 <?php
-/// <module name="Mail.Serialize" version="0.2.1" maintainer="timokhin@techart.ru">
+/// <module name="Mail.Serialize" version="0.2.2" maintainer="timokhin@techart.ru">
 ///     <brief>Модуль для кодирования и декодирования письма</brief>
 Core::load('MIME', 'MIME.Encode', 'MIME.Decode', 'Mail.Message');
 
@@ -10,7 +10,7 @@ class Mail_Serialize implements Core_ModuleInterface {
 
 ///   <constants>
   const MODULE  = 'Mail.Serialize';
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -173,7 +173,8 @@ class Mail_Serialize_Encoder {
 ///     </args>
 ///     <body>
   protected function encoder_for(Mail_Message_Part $msg) {
-    return MIME_Encode::encoder($msg->head['Content-Transfer-Encoding']);
+    return MIME_Encode::encoder(isset($msg->head['Content-Transfer-Encoding']) ?
+      $msg->head['Content-Transfer-Encoding']->value : null);
   }
 ///     </body>
 ///   </method>
@@ -251,20 +252,20 @@ class Mail_Serialize_Decoder {
       while (true) {
           if (!$head = $this->decode_head()) break;
 
-          if (Core_Regexps::match('{^[Mm]ultipart}', $head['Content-Type'])) {
+          if (Core_Regexps::match('{^[Mm]ultipart}', $head['Content-Type']->value)) {
 
           $parent->part($this->decode_part(Mail::Message()->head($head)));
 
           $parent->epilogue($this->skip_to_boundary($parent));
 
         } else {
-          $decoder = MIME_Decode::decoder($head['Content-Transfer-Encoding'])->
+          $decoder = MIME_Decode::decoder($head['Content-Transfer-Encoding']->value)->
             from_stream($this->input)->
             with_boundary($parent->head['Content-Type']['boundary']);
 
           $parent->part(Mail::Part()->
             head($head)->
-            body($this->is_text_content_type($head['Content-Type']) ?
+            body($this->is_text_content_type($head['Content-Type']->value) ?
                    $decoder->to_string() :
                    $decoder->to_temporary_stream()));
 
@@ -272,10 +273,10 @@ class Mail_Serialize_Decoder {
         }
       }
     } else {
-      $decoder = MIME_Decode::decoder($parent->head['Content-Transfer-Encoding'])->
+      $decoder = MIME_Decode::decoder($parent->head['Content-Transfer-Encoding']->value)->
         from_stream($this->input);
 
-      $parent->body($this->is_text_content_type($head['Content-Type']) ?
+      $parent->body($this->is_text_content_type($head['Content-Type']->value) ?
                       $decoder->to_string() :
                       $decoder->to_temporary_stream());
     }
