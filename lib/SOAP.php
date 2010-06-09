@@ -50,7 +50,7 @@ class SOAP_Client extends SoapClient {
 ///       <arg name="version" type="int" />
 ///     </args>
 ///     <body>
-  public function __doRequest($request, $location, $version) {
+  public function __doRequest($request, $location, $action, $version) {
     $this->last_request = SOAP::XmlFixer()->
       fix_xml($request, $this->last_args);
     return parent::__doRequest($this->last_request,
