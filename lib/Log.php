@@ -1,5 +1,5 @@
 <?php
-/// <module name="Log" version="0.1.0" maintainer="timokhin@techart.ru">
+/// <module name="Log" version="0.1.1" maintainer="timokhin@techart.ru">
 
 Core::load('IO.FS');
 
@@ -13,7 +13,7 @@ Core::load('IO.FS');
 class Log implements Core_ModuleInterface {
   
 ///   <constants>
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
 ///   </constants>
 
 
@@ -21,6 +21,8 @@ class Log implements Core_ModuleInterface {
     'stream' => 'Log.StreamHandler',
     'file'   => 'Log.FileHandler',
     'syslog' => 'Log.SyslogHandler' );
+
+  static $default;
 
 ///   <protocol name="building">
 
@@ -39,6 +41,15 @@ class Log implements Core_ModuleInterface {
   static public function make_handler($name, array $args) {
     if (!isset(self::$handlers[$name])) throw new Log_UnknownHandlerException($name);
     return Core::amake(self::$handlers[$name], $args);
+  }
+///     </body>
+///   </method>
+
+///   <method name="logger" returns="Log.Dispatcher" scope="class">
+///     <body>
+  static public function logger() {
+    if (!self::$default) self::$default = self::Dispatcher();
+    return self::$default;
   }
 ///     </body>
 ///   </method>
@@ -238,8 +249,9 @@ class Log_HandlerBuilder implements Core_CallInterface {
 /// </aggregation>
 
 /// <class name="Log.Context">
+///   <implements interface="Core.PropertyAccessInterface" />
 ///   <depends supplier="Log.Level" stereotype="uses" />
-class Log_Context {
+class Log_Context implements Core_PropertyAccessInterface {
   
   protected $parent;
   protected $values = array();
@@ -372,6 +384,84 @@ class Log_Context {
 ///   </method>
 
 ///   </protocol>
+
+///   <protocol name="supporting">
+
+///   <method name="get_dispatcher" returns="Log.Dispatcher" access="protected">
+///     <body>
+  protected function get_dispatcher() {
+    return ($this instanceof Log_Dispatcher) ? $this : $this->parent->get_dispatcher();
+  }
+///     </body>
+///   </method>
+
+///   </protocol>
+
+///   <protocol name="accessing" interface="Core.PropertyAccessInterface">
+  
+///   <method name="__get" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __get($property) {
+    switch ($property) {
+      case 'parent':
+        return $this->parent;
+      case 'dispatcher':
+        return $this->get_dispatcher();
+      default:
+        throw new Core_MissingPropertyException($property);  
+    }
+  } 
+///     </body>
+///   </method>
+
+///   <method name="__set" returns="Service.Yandex.Direct.Manager.Application">
+///     <args>
+///       <arg name="property" type="string" />
+///       <arg name="value" />
+///     </args>
+///     <body>  
+  public function __set($property, $value) { 
+    throw new Core_ReadOnlyObjectException($this); 
+  }
+///     </body>
+///   </method>
+
+///   <method name="__isset" returns="boolean">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __isset($property) {
+    switch ($property) {
+      case 'parent':
+        return isset($this->$property);
+      case 'dispatcher':
+        return true;
+      default:
+        return false;
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="property" type="string">
+///     <args>
+///     </args>
+///     <body>
+  public function __unset($property) {
+    throw new Core_ReadOnlyObjectException($this);
+  }
+///     </body>
+///   </method>
+
+ 
+  
+///   </protocol>
+
+
 }
 /// </class>
 /// <aggregation>
@@ -864,10 +954,10 @@ class Log_SyslogHandler extends Log_Handler {
 ///     <body>
   public function emit($message) {
     static $priorities = array(
-      Log_Level::DEBUG => LOG_DEBUG,
-      Log_Level::INFO  => LOG_NOTICE,
-      Log_Level::WARNING => LOG_WARNING,
-      Log_Level::ERROR   => LOG_ERR,
+      Log_Level::DEBUG    => LOG_DEBUG,
+      Log_Level::INFO     => LOG_NOTICE,
+      Log_Level::WARNING  => LOG_WARNING,
+      Log_Level::ERROR    => LOG_ERR,
       Log_Level::CRITICAL => LOG_CRIT );
 
     if (isset($priorities[$l = Log_Level::normalize($message->level)])) 
