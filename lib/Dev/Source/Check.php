@@ -1,5 +1,5 @@
 <?php
-/// <module name="Dev.Source.Check" maintainer="svistunov@techart.ru" version="0.2.0">
+/// <module name="Dev.Source.Check" maintainer="svistunov@techart.ru" version="0.3.0">
 Core::load('Object', 'CLI.Application', 'Dev.Source');
 
 /// <class name="Dev.Source.Check" stereotype="module">
@@ -7,7 +7,7 @@ Core::load('Object', 'CLI.Application', 'Dev.Source');
 ///   <implements interface="CLI.RunInterface" />
 class Dev_Source_Check implements Core_ModuleInterface, CLI_RunInterface {
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
 ///   </constants>
 
 ///   <protocol name="performing">
@@ -352,8 +352,8 @@ class Dev_Source_Check_ValidXMLCommentChecker implements Dev_Source_Check_Checke
 }
 /// </class>
 
-/// <class name="Dev.Source.Check.Application" extends="CLI.Application.AbstractApplication">
-class Dev_Source_Check_Application extends CLI_Application_AbstractApplication {
+/// <class name="Dev.Source.Check.Application" extends="CLI.Application.Base">
+class Dev_Source_Check_Application extends CLI_Application_Base {
 
 ///   <protocol name="supporting">
 
@@ -389,8 +389,8 @@ class Dev_Source_Check_Application extends CLI_Application_AbstractApplication {
       new Dev_Source_Check_ValidXMLCommentChecker());
     $result = new Dev_Source_Check_Result();
 
-    $runner->run($this->options['library']!=null ?
-      Dev_Source::LibraryDirIterator($this->options['library']) :
+    $runner->run(isset($this->config->library) ?
+      Dev_Source::LibraryDirIterator($this->config->library) :
       Dev_Source::Library($argv) , $checker, $result);
     $this->output($result);
     return 0;
@@ -405,11 +405,9 @@ class Dev_Source_Check_Application extends CLI_Application_AbstractApplication {
 ///   <method name="setup" access="protected">
 ///     <body>
   protected function setup() {
-    return parent::setup()->
-      usage_text(Core_Strings::format("Dev.Source.Check %s: TAO Code Checker\n", Dev_Source_Check::VERSION))->
-      options(
-        array(
-          array('library', '-l', '--library', 'string', null, 'Path to library')));
+    $this->options->
+      brief('Dev.Source.Check '.Dev_Source_Check::VERSION.' TAO code checker')->
+      string_option('library', '-l', '--library', 'Path to library');
   }
 ///     </body>
 ///   </method>

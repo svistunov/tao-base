@@ -610,8 +610,8 @@ class Dev_Source_Doc_ApplicationListener implements Dev_Source_Doc_ModuleGenerat
 }
 /// </class>
 
-/// <class name="Dev.Source.Doc.Application" extends="CLI.Application.AbstractApplication">
-class Dev_Source_Doc_Application extends CLI_Application_AbstractApplication {
+/// <class name="Dev.Source.Doc.Application" extends="CLI.Application.Base">
+class Dev_Source_Doc_Application extends CLI_Application_Base {
 ///   <protocol name="performing">
 
 ///   <method name="run" returns="int">
@@ -645,17 +645,15 @@ class Dev_Source_Doc_Application extends CLI_Application_AbstractApplication {
 ///   <method name="setup" access="protected">
 ///     <body>
   protected function setup() {
-    return parent::setup()->
-      usage_text(Core_Strings::format("Dev.Source.Doc %s: TAO Documentation creating\n", Dev_Source_Doc::VERSION))->
-      options(
-        array(
-          array('library', '-l', '--library', 'string', null, 'Path to library'),
-          array('module', '-m', '--module',  'string', null, 'Module name'),
-          array('visible', '-v', '--visible', 'boolean', true, 'Visible output process'),
-          array('output',  '-o', '--output', 'string', null, 'Path to output')),
-        array(
-          'library' => './lib',
-          'visible' => false));
+    $this->options->
+      brief('Dev.Source.Doc '.Dev_Source_Doc::VERSION.': TAO documentation generator')->
+      string_option('library',  '-l', '--library', 'Path to library')->
+      string_option('module',   '-m', '--module',  'Module name')->
+      boolean_option('visible', '-v', '--visible', 'Visible output process (wtf?')->
+      string_option('output',   '-o', '--output',  'Path to output');
+
+    $this->config->library = './lib';
+    $this->config->visible  = false;
   }
 ///     </body>
 ///   </method>

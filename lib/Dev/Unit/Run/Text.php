@@ -1,5 +1,5 @@
 <?php
-/// <module name="Dev.Unit.Run.Text" version="0.2.0" maintainer="timokhin@techart.ru">
+/// <module name="Dev.Unit.Run.Text" version="0.3.0" maintainer="timokhin@techart.ru">
 
 Core::load('Dev.Unit', 'IO.Stream', 'Time', 'CLI.Application');
 
@@ -11,7 +11,7 @@ class Dev_Unit_Run_Text implements Core_ModuleInterface, CLI_RunInterface {
 
 ///   <constants>
   const MODULE  = 'Dev.Unit.Text';
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
 
 
   const DATE_FORMAT = '%m-%d-%Y %H:%M';
@@ -244,8 +244,8 @@ class Dev_Unit_Run_Text_TestRunner {
 /// </class>
 
 
-/// <class name="Dev.Unit.Run.Text.Application" extends="CLI.Application.AbstractApplication">
-class Dev_Unit_Run_Text_Application extends CLI_Application_AbstractApplication {
+/// <class name="Dev.Unit.Run.Text.Application" extends="CLI.Application.Base">
+class Dev_Unit_Run_Text_Application extends CLI_Application_Base {
 
 ///   <protocol name="performing">
 
@@ -257,7 +257,7 @@ class Dev_Unit_Run_Text_Application extends CLI_Application_AbstractApplication 
   public function run(array $argv) {
     Dev_Unit_Run_Text::TestRunner()->run(
       Dev_Unit::TestLoader()->
-        prefix($this->options['noprefix'] ? '' : $this->options['prefix'])->
+        prefix($this->config->noprefix ? '' : $this->config->prefix)->
         from($argv)->
         suite);
     return 0;
@@ -272,17 +272,17 @@ class Dev_Unit_Run_Text_Application extends CLI_Application_AbstractApplication 
 ///   <method name="setup" returns="Dev.Unit.Test.Application" access="protected">
 ///     <body>
   protected function setup() {
-    return parent::setup()->
-      usage_text(
-        Core_Strings::format(
-          "Dev.Unit.Text %s\nSpecify test class or test module names as arguments.\n",
-          Dev_Unit::VERSION))->
-      options(
-        array(
-          array('prefix', '-p', '--prefix', 'string', null, 'Test class prefix'),
-          array('noprefix', '-n', '--no-prefix', 'boolean', true, 'Don\'t use class prefix')),
-        array('prefix'   => 'Test.',
-              'noprefix' => false));
+    $this->options->
+      brief('Dev.Unit.Run.Text'.Dev_Unit_Run_Text::VERSION."\n".
+            'Specify test class or test module names as arguments')->
+      string_option('prefix', '-p', '--prefix', 'Test class prefix')->
+      boolean_option('noprefix', '-n', '--no-prefix', 'Don\'t use class prefix');
+
+    $this->log->dispatcher->
+      to_stream(IO::stderr());
+
+    $this->config->prefix = 'Test.';
+    $this->config->noprefix = false;
   }
 ///     </body>
 ///   </method>

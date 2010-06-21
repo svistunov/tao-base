@@ -1,5 +1,5 @@
 <?php
-/// <module name="Dev.Cache.Dump" maintainer="svistunov@techart.ru" version="0.2.0">
+/// <module name="Dev.Cache.Dump" maintainer="svistunov@techart.ru" version="0.3.0">
 ///   <brief>CLI приложение для вывода дампа закешированного занчения по ключу</brief>
 Core::load('CLI.Application', 'Cache');
 
@@ -7,7 +7,7 @@ Core::load('CLI.Application', 'Cache');
 ///   <implements interface="Core.ModuleInterface" />
 class Dev_Cache_Dump implements Core_ModuleInterface, CLI_RunInterface {
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
 ///   </constants>
 
 ///   <protocol name="performing">
@@ -26,9 +26,9 @@ class Dev_Cache_Dump implements Core_ModuleInterface, CLI_RunInterface {
 }
 /// </class>
 
-/// <class name="Dev.Cache.Dump.Application" extends="CLI.Application.AbstractApplication">
+/// <class name="Dev.Cache.Dump.Application" extends="CLI.Application.Base">
 ///   <brief>Класс CLI приложения</brief>
-class Dev_Cache_Dump_Application extends CLI_Application_AbstractApplication {
+class Dev_Cache_Dump_Application extends CLI_Application_Base {
 
 ///   <protocol name="performing">
 
@@ -39,16 +39,15 @@ class Dev_Cache_Dump_Application extends CLI_Application_AbstractApplication {
 ///     </args>
 ///     <body>
   public function run(array $argv) {
-    $cache = Cache::connect($this->options['dsn']);
+    $cache = Cache::connect($this->config->dsn);
 
-    if ($this->options['modules'] != null)
-    foreach (Core_Strings::split_by(',', $this->options['modules']) as $v)
+    if ($this->config->modules != null)
+    foreach (Core_Strings::split_by(',', $this->config->modules) as $v)
       Core::load($v);
 
     foreach ($argv as $v) {
       IO::stdout()->write_line($v)->
         write_line(var_export($cache[$v], true));
-        //var_dump($cache[$v]);
     }
     return 0;
   }
@@ -63,13 +62,12 @@ class Dev_Cache_Dump_Application extends CLI_Application_AbstractApplication {
 ///   <brief>Устанавливает параметры CLI приложения</brief>
 ///     <body>
   protected function setup() {
-    return parent::setup()->
-      usage_text(Core_Strings::format("Dev.Cache.Dump %s: TAO Cache dump utility\n", Cache_Dump::VERSION))->
-      options(
-        array(
-          array('dsn',      '-f', '--dsn',      'string',  null,  'Cache backend DSN'),
-          array('modules',      '-m', '--preload',      'string',  null,  'Preload ')),
-          array('dsn'=> 'memcache://localhost/11211'));
+    $this->options->
+      brief('Dev.Cache.Dump '.Dev_Cache_Dump::VERSION.': TAO Cache dump utility')->
+      string_option('dsn',      '-f', '--dsn',     'Cache backend DSN')->
+      string_option('modules' , '-m', '--preload', 'Preload');
+
+    $this->config->dsn = 'memcache://localhost/11211';
   }
 ///     </body>
 ///   </method>

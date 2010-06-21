@@ -1,43 +1,21 @@
 <?php
-/// <module name="CLI.Application" version="0.2.0" maintainer="timokhin@techart.ru">
+/// <module name="CLI.Application" version="0.3.0" maintainer="timokhin@techart.ru">
 ///   <brief>Простейшая структура CLI-приложения</brief>
-///   <details>
-///     <p>Модуль определяет простейшую структуру CLI-приложения, обладающего следующей
-///        функциональностью:</p>
-///     <ul>
-///       <li>поддержка набора опций командной строки, преобразование значений опций в конфигурацию
-///           приложения;</li>
-///       <li>поддержка стандартного ключа справки (-h) и вывод списка поддерживаемых опций;</li>
-///       <li>выполнение основного кода приложения;</li>
-///       <li>перехват исключений, вывод информации об ошибки в stderr, завершение работы
-///           программы с аварийным статусом.</li>
-///     </ul>
-///     <p>Для создания приложения необходимо унаследовать свой класс приложения от абстрактного
-///        базового класса CLI.Application.Base. Точкой входа в приложение является метод main()
-///        класса приложения, однако пользовательский код имеет смысл размещать в методе run(),
-///        который вызывается из main().</p>
-///     <p>Поддерживаемые параметры командной строки и текст описания программы необходимо указать
-///        в методе setup() с помощью соответствующих методов, не забыв при этом вызвать
-///        родительский метод.</p>
-///     <p>Обработка ошибок выполняется методов handle_error(), который по умолчанию выводит
-///        сообщение об ошибке в stderr()  и завершает выполнение с аварийным статусом.</p>
-///     <p>Как правило, класс приложения реализуется внутри запускаемого модуля, поддерживающего
-///        интерфейс CLI_RunInterface. В этом случае создание экземпляра объекта приложения и вызов
-///        его метода main() лучше всего выполнять внутри статического метода main() запускаемого
-///        модуля.</p>
-///     <code><![CDATA[
-/// static public function main(array $args) { return self::Application()->main($args); }
-///     ]]></code>
-///   </details>
-// TODO: CLI.Application.AbstractApplication -> CLI.Application.Base
-Core::load('CLI', 'CLI.GetOpt', 'IO');
+Core::load('CLI', 'CLI.GetOpt', 'IO', 'Log', 'Config.DSL');
 
 /// <class name="CLI.Application" stereotype="module">
+///   <depends supplier="CLI" stereotype="uses" />
+///   <depends supplier="CLI.GetOpt" stereotype="uses" />
+///   <depends supplier="IO" stereotype="uses" />
+///   <depends supplier="Log" stereotype="uses" />
+///   <depends supplier="Config.DSL" stereotype="uses" />
+///   <depends supplier="CLI.Application.Exception" stereotype="defines" />
+///   <depends supplier="CLI.Application.Base" stereotype="defines" />
 ///   <brief>Класс модуля</brief>
 class CLI_Application implements Core_ModuleInterface {
 ///   <constants>
   const MODULE  = 'CLI.Application';
-  const VERSION = '0.2.1';
+  const VERSION = '0.3.0';
 ///   </constants>
 }
 /// </class>
@@ -50,89 +28,141 @@ class CLI_Application_Exception extends CLI_Exception {}
 
 
 /// <class name="CLI.Application.Base" stereotype="abstract">
+///   <implements interface="Core.PropertyAccessInterface" />
 ///   <brief>Базовый класс CLI-приложения</brief>
 ///   <details>
-///     <p>Производные классы могут использовать следующие protected-свойства:</p>
+///     <p>Базовый класс определяет простую структуру приложения командной строки со следующими
+///        возможностями:</p>
+///     <ul>
+///       <li>хранение информации о настройках приложения в объекте конфигурации;</li>
+///       <li>разбор параметров командной строки и установка соответствующих значений 
+///           в объекте конфигурации;</li>
+///       <li>загрузка конфигурационного файла в формате DSL.Config и установка значений
+///           объекта конфигурации из этого файла;</li>
+///       <li>автоматический вывод списка поддерживаемых опцией по кючам -h/--help;</li>
+///       <li>ведение логов.</li>
+///     </ul>
+///     <p>Объекты класса содержат следующие атрибуты, доступные снаружи на чтение, а изнутри —
+///        на запись:</p>
 ///     <dl>
-///       <dt>getopt</dt><dd>объект класса CLI.GetOpt.Parser, используемый для разбора опций
-///                          командной строки;</dd>
-///        <dt>options</dt><dd>массив значений установленных опций командной строки.</dd>
+///      <dt>options</dt>
+///      <dd>объект класса CLI.GetOpt.Parser, отвечающий за разбор командной  строки</dd>
+///      <dt>config</dt>
+///      <dd>объект класса stdClass, содержащий настройки приложения. Значения настроек могут
+///          быть получены из файла конфигурации или параметров командной строки;</dd>
+///      <dt>log</dt>
+///      <dd>объект класса Log.Context, добавляющий в запись лога поле module c именем модуля
+///          приложения.</dd>
 ///     </dl>
-///     <p>Для настройки опций командной строки и текста описания программы необходимо
-///        переопределить метод setup(). Встроенная реализация добавляет в список опций стандартный
-///        ключ -h, выводящий справочную информацию о поддерживаемых опциях, поэтому логично
-///        вызывать родительскую реализацию в производном классе.</p>
+///     <p>Жизненный цикл приложения выглядит следующим образом:</p>
+///     <ol>
+///       <li>Создание объекта приложения (__construct). Создаются объекты options, log и config 
+///           со значениями по умолчанию.</li>
+///       <li>Первоначальная настройка приложения (setup). Метод setup предназначен для настройки
+///           парсера options и установки значений по умолчанию для объекта config.</li>
+///       <li>Разбор опций командной строки, запись соответствующих значений в config.</li>
+///       <li>Конфигурирование приложения (configure). Метод configure предназначен для 
+///           окончательной настройки параметров приложения. На момент выполнения метода в 
+///           объекте конфигурации уже присутствуют параметры, указанные в командной строке,
+///           таким образом, в качестве такого параметра можно получить путь к файлу конфигурации.
+///           Для подгрузки файла можно использовать вспомогательный метод load_config().</li>
+///       <li>Инициализация логов.</li>
+///       <li>Выполнение метода show_usage, если установлен параметр конфигурации show_user, или 
+///           вызов метода run($argv), выполняющий основной код приложения. Целочисленный 
+///           результат выполнения метода run() используется в качестве кода завершения 
+///           приложения.</li>
+///       <li>Завершение приложения (shutdown). Метод предназначен для определения операций, 
+///           которые должны быть выполнены в случае нормального или аварийного завершения
+///           приложения.</li>
+///       <li>Закрытие логов.</li>
+///     </ol>
 ///   </details>
-abstract class CLI_Application_AbstractApplication {
+abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
 
-  private $usage_text;
-
-  protected $getopt;
-  protected $options = array();
+  protected $options;
+  protected $config;
+  protected $log;
 
 ///   <protocol name="creating">
 
 ///   <method name="__construct">
 ///     <brief>Конструктор</brief>
 ///     <details>
-///       <p>Создает экземпляр парсера параметров командной строки и вызывает метод setup().</p>
+///       <p>Создает объекты options, log и config.</p>
+///       <p>Объект options инициализируется опцией -h/--help, которой соответствует
+///          элемент show_usage в объекте конфигурации config. Обработка опции
+///          выполняется автоматически.</p> 
+///       <p>Объект log представляет собой контекст логирования, производный от
+///          диспетчера Log::logger(), добавляющий атрибут module, содержащий
+///          имя модуля приложения.</p>
+///       <p>Объект config по умолчанию содержит два атрибута:</p>
+///       <dl>
+///         <dt>show_usage</dt>  
+///         <dd>признак запроса вывода информации об использовании;</dd>
+///         <dt>log</dt>
+///          <dd>Ссылка на диспетчер логов Log::logger() для удобства его 
+///              настройки в конфигурационном файле.</dd>
+///       </dl>
 ///     </details>
 ///     <body>
   public function __construct() {
-    $this->getopt = CLI_GetOpt::Parser();
-    $this->setup();
-  }
-///     </body>
-///   </method>
+    $this->options = CLI_GetOpt::Parser()->
+      boolean_option('show_usage', '-h', '--help', 'Shows help message');
 
-///   <method name="setup" returns="CLI.Application.AbstractApplication" access="protected">
-///   <brief>Выполняет конфигурирование приложения.</brief>
-///     <body>
-  protected function setup() {
-    return $this->options(array(
-      array('show_help', '-h', '--help', 'boolean', true, 'Shows help message')),
-      array('show_help' => false));
+    $this->log = Log::logger()->context(array(
+      'module' => Core_Types::module_name_for($this)));
+
+    $this->config = Core::object(array(
+      'log'        => Log::logger(),
+      'show_usage' => false));
+
   }
 ///     </body>
 ///   </method>
 
 ///   </protocol>
 
-///   <protocol name="configuring">
+///   <protocol name="performing">
 
-///   <method name="usage_text" returns="CLI.Application.AbstractApplication" access="protected">
-///   <brief>Устанавливает текст описания приложения.</brief>
-///     <args>
-///       <arg name="text" type="string" brief="текст" />
-///     </args>
+///   <method name="setup" access="protected">
+///     <brief>Первоначальная настройка приложения</brief>
 ///     <details>
-///       <p>Метод предназначен для использования внутри метода setup().</p>
-///     </details>
+///       <p>Метод предназначен для первоначальной настройки приложения,
+///          в частности:</p>
+///       <ul>
+///         <li>определения списка поддерживаемых опций для парсера
+///             аргументов командной строки options;</li>
+///         <li>установки значений параметров по умолчанию в объекте
+///             конфигурации config.</li>  
+///       </ul>      
+///     </details> 
 ///     <body>
-  protected function usage_text($text) { $this->usage_text = $text; return $this; }
+  protected function setup() {}
 ///     </body>
 ///   </method>
 
-///   <method name="options" returns="CLI.Application.AbstractApplication" access="protected">
-///   <brief>Описавает опции приложения и значения по умолчанию</brief>
-///     <args>
-///       <arg name="options"  type="array" brief="список опций" />
-///       <arg name="defaults" type="array" default="array()" brief="список значений по умолчанию" />
-///     </args>
+///   <method name="shutdown" access="protected">
+///     <brief>Завершение работы приложения</brief>    
 ///     <details>
-///       <p>Метод предназначен для упрощения конфигурирования приложения в методе setup().</p>
-///       <p>Список опций представляет собой массив, каждый элемент которого в свою очередь является
-///          массивом, описывающим опций в формате, определенном в модуле CLI.GetOpt.</p>
-///       <p>Список значений по умолчанию позволяет установить значения опций, которые будут
-///          использоваться в случае отсутствия явного указания значения в командной строке.</p>
+///       <p>Метод предназначен для выполнения операций, необходимых при
+///          завершении работы приложения, например, закрытия файлов и 
+///          соединений с базой данных.</p>
+///       <p>Закрытие логов производится классом приложения автоматически.</p>
 ///     </details>
 ///     <body>
-  protected function options(array $options, array $defaults = array()) {
-    foreach ($options as $v)
-      $this->getopt->option($v[0], $v[1], $v[2], $v[3], $v[4], $v[5]);
-    $this->getopt->defaults($defaults);
-    return $this;
-  }
+  protected function shutdown() {}
+///     </body>
+///   </method>
+
+///   <method name="configure" access="protected">
+///     <brief>Выполняет конфигурирование приложения</brief>
+///     <details>
+///       <p>В отличие от метода setup(), этот метод вызывается после разбора
+///          командной строки. Метод рекомендуется использовать, в частности,
+///          для подгрузки конфигурационного файла с помощью load_config().</p>  
+///     </details>
+///     <body>
+  protected function configure() {}
 ///     </body>
 ///   </method>
 
@@ -143,12 +173,17 @@ abstract class CLI_Application_AbstractApplication {
 ///   <method name="run" returns="int" stereotype="abstract">
 ///   <brief>Выполняет пользовательскую логику приложения</brief>
 ///     <args>
-///       <arg name="argv" type="array" />
+///       <arg name="argv" type="array" brief="массив параметров командной строки" />
 ///     </args>
+///     <details>
+///       <p>Передаваемый массив параметров командной строки содержит параметры,
+///          оставшиеся после разбора парсером.</p>
+///     </details>
 ///     <body>
   abstract public function run(array $argv);
 ///     </body>
 ///   </method>
+
 
 ///   <method name="main">
 ///   <brief>Точка входа приложения</brief>
@@ -156,27 +191,97 @@ abstract class CLI_Application_AbstractApplication {
 ///       <arg name="argv" type="array" brief="массив параметров командной строки" />
 ///     </args>
 ///     <details>
-///       <p>Метод выполняет следующую последовательность действий:</p>
-///       <ol>
-///         <li>выполняет разбор опций командной строки и заполняет массив options;</li>
-///         <li>если была передана опция -h, выводит информацию об использовании и
-///             завершает выполнение;</li>
-///         <li>вызывает метод run(), передавая ему список аргументов командной строки, оставшихся
-///             после работы парсера;</li>
-///         <li>если при выполнении run() не возникло исключений -- завершает работу с кодом,
-///             который вернул метод run();</li>
-///         <li>если возникло исключение -- обрабатывает его путем вызова метода
-///             handle_error().</li>
-///       </ol>
 ///     </details>
 ///     <body>
   public function main(array $argv) {
     try {
-      $this->options = $this->getopt->parse($argv);
-      return $this->shutdown($this->options['show_help'] ? $this->show_usage() : $this->run($argv));
-    } catch(Exception $e) {
-      return $this->shutdown($this->handle_error($e));
+      $this->setup();
+
+      $this->options->parse($argv, $this->config);
+      
+      $this->configure();
+      
+      Log::logger()->init();
+
+      $rc =  $this->config->show_usage ? $this->show_usage() : $this->run($argv);
+
+    } catch (Exception $e) {
+      return $this->finalize($this->handle_error($e));
     }
+    return $this->finalize($rc);
+  }
+///     </body>
+///   </method>
+
+///   </protocol>
+
+///   <protocol name="accessing" interface="Core.PropertyAccessInterface">
+
+///   <method name="__get" returns="mixed">
+///     <brief>Возвращает значение свойства</brief>
+///     <args>
+///       <arg name="property" type="string" brief="имя свойства" />
+///     </args>
+///     <body>
+  public function __get($property) {
+    switch ($property) {
+      case 'options':
+      case 'log':
+      case 'config':
+        return $this->$property;
+      default:
+        throw new Core_MissingPropertyException($property);  
+    }
+  } 
+///     </body>
+///   </method>
+
+///   <method name="__set" returns="Service.Yandex.Direct.Manager.Application">
+///     <brief>Устанавливает значение свойства</brief>
+///     <args>
+///       <arg name="property" type="string" brief="имя свойства" />
+///       <arg name="value" brief="значение свойства" />
+///     </args>
+///     <details>
+///       <p>Свойства объекта доступны только на чтение.</p>
+///     </details>
+///     <body>  
+  public function __set($property, $value) { 
+    throw new Core_ReadOnlyObjectException($this); 
+  }
+///     </body>
+///   </method>
+
+///   <method name="__isset" returns="boolean">
+///     <brief>Проверяет установку значения свойства</brief>
+///     <args>
+///       <arg name="property" type="string" brief="имя свойства" />
+///     </args>
+///     <body>
+  public function __isset($property) {
+    switch ($property) {
+      case 'options':
+      case 'log':
+      case 'config':
+        return isset($this->$property);
+      default:
+        return false;
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="property" type="string">
+///     <brief>Сбрасывает значение свойства</brief>
+///     <args>
+///       <arg name="property" type="string" brief="имя свойства" />
+///     </args>
+///     <details>
+///       <p>Свойства объекта доступны только на чтение.</p>
+///     </details>
+///     <body>
+  public function __unset($property) {
+    throw new Core_ReadOnlyObjectException($this);
   }
 ///     </body>
 ///   </method>
@@ -185,29 +290,33 @@ abstract class CLI_Application_AbstractApplication {
 
 ///   <protocol name="supporting">
 
-///   <method name="shutdown">
+///   <method name="finalize" access="protected">
 ///     <brief>Завершает выполнение</brief>
 ///     <args>
-///       <arg name="status" type="int" />
+///       <arg name="status" type="int" brief="код завершения" />
 ///     </args>
+///     <details>
+///       <p>Вызывает пользовательский метод shutdown(), закрывает логи и выходит с указанным кодом 
+///          завершения.</p>
+///     </details>
 ///     <body>
-  protected function shutdown($status) {
+  protected function finalize($status) {
+    $this->shutdown();
+    Log::logger()->close();
     exit((int) $status);
   }
 ///     </body>
 ///   </method>
 
 ///   <method name="show_usage" access="protected" returns="int">
-///     <brief>Выводит в stdout текст с описанием программы</brief>
+///     <brief>Выводит в stdout описание программы</brief>
 ///     <details>
 ///       <p>Выводимый текст содержит собственно текст описания и список поддерживаемых опций
 ///          командной строки с описанием каждой опции.</p>
 ///     </details>
 ///    <body>
   protected function show_usage() {
-    IO::stdout()->
-      write($this->usage_text)->
-      write(CLI_GetOpt::usage_text($this->getopt));
+    IO::stdout()->write($this->options->usage_text());
     return 0;
   }
 ///     </body>
@@ -216,18 +325,42 @@ abstract class CLI_Application_AbstractApplication {
 ///   <method name="handle_error" access="protected">
 ///     <brief>Выполняет обработку ошибок</brief>
 ///     <args>
-///       <arg name="e" type="Exception" />
+///       <arg name="e" type="Exception" brief="исключение" />
 ///     </args>
 ///     <details>
 ///       <p>Метод вызывается в случае генерации исключения. Реализация по умолчанию выводит текст
-///         исключения в stderr и завершает программу со статусом завершения -1.</p>
+///         исключения в лог с уровнем critical  и завершает программу со статусом завершения -1.</p>
 ///     </details>
 ///     <body>
   protected function handle_error(Exception $e) {
     try {
-      IO::stderr()->format("Error: %s\n", $e->getMessage());
-      return -1;
+      $this->log->critical($e->getMessage());
     } catch (Exception $e) {}
+    return -1;
+  }
+///     </body>
+///   </method>
+
+///   <method name="load_config" returns="CLI.Application.Base" access="protected">
+///     <brief>Подгружает файл конфигурации в формате Config.DSL</brief>
+///     <args>
+///       <arg name="path" type="string" brief="путь к файлу конфигурации" />
+///     </args>
+///     <details>
+///       <p>Если приложение допускает указание пути к файлу конфигурации в
+///          в командной строке, этот метод лучше всего вызывать из метода
+///          configure().</p>
+///       <p>Если приложение работает с фиксированными конфигурационными файлам,
+///          метод можно вызвать из метода setup().</p>
+///     </details>
+///     <body>
+  protected function load_config($path) {
+    if (IO_FS::exists($path)) {
+      $this->log->debug('Using config: %s', $path);
+      Config_DSL::Builder($this->config)->load($path);
+    } else
+      throw new CLI_ApplicationException("Missing config file: $path");
+    return $this;
   }
 ///     </body>
 ///   </method>
@@ -236,8 +369,12 @@ abstract class CLI_Application_AbstractApplication {
 }
 /// </class>
 /// <composition>
-///   <source class="CLI.Application.AbstractApplication" role="application" multiplicity="1" />
+///   <source class="CLI.Application.Base" role="application" multiplicity="1" />
 ///   <target class="CLI.GetOpt.Parser" role="options" multiplicity="1" />
+/// </composition>
+/// <composition>
+///   <source class="CLI.Application.Base" stereotype="application" multiplicity="1" />
+///   <target class="Log.Context" stereotype="logger" multiplicity="1" />
 /// </composition>
 
 /// </module>

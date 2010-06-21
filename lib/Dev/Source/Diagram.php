@@ -1,12 +1,12 @@
 <?php
-/// <module name="Dev.Source.Diagram" maintainer="timokhin@techart.ru" version="0.2.0">
+/// <module name="Dev.Source.Diagram" maintainer="timokhin@techart.ru" version="0.4.0">
 Core::load('CLI.Application', 'IO.FS', 'Dev.Source', 'Text', 'Proc');
 
 /// <class name="Dev.Source.Diagram" stereotype="module">
 ///   <implements interface="Core.ModuleInterface" />
 class Dev_Source_Diagram implements Core_ModuleInterface, CLI_RunInterface {
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.4.0';
 ///   </constants>
 
 ///   <protocol name="performing">
@@ -213,8 +213,8 @@ XSL;
 }
 /// </ignore>
 
-/// <class name="Dev.Source.Diagram.Application" extends="CLI.Application.AbstractApplication">
-class Dev_Source_Diagram_Application extends CLI_Application_AbstractApplication {
+/// <class name="Dev.Source.Diagram.Application" extends="CLI.Application.Base">
+class Dev_Source_Diagram_Application extends CLI_Application_Base {
 
 ///   <protocol name="performing">
 
@@ -236,9 +236,8 @@ class Dev_Source_Diagram_Application extends CLI_Application_AbstractApplication
       return -1;
     }
 
-    $this->options['dump'] ?
-      IO::stdout()->write($result) :
-      $this->output($result);
+    $this->config->dump ?
+      IO::stdout()->write($result) : $this->output($result);
 
     return 0;
   }
@@ -252,19 +251,18 @@ class Dev_Source_Diagram_Application extends CLI_Application_AbstractApplication
 ///   <method name="setup" access="protected">
 ///     <body>
   protected function setup() {
-    return parent::setup()->
-      usage_text(Core_Strings::format("Dev.Source.Diagram %s: TAO module visualization utility\n", Dev_Source_Diagram::VERSION))->
-      options(
-        array(
-          array('application', '-a', '--application', 'string',  null, 'Visualizer application (graphviz)'),
-          array('format',      '-T', '--format',      'string',  null, 'Output format'),
-          array('dump',        '-d', '--dump',        'boolean', true, 'No output conversion'),
-          array('output',      '-o', '--output',      'string',  null,  'Output file')),
-        array(
-          'application' => 'dot',
-          'format'      => 'png',
-          'output'      => null,
-          'no_output'   => false ));
+    $this->options->
+      brief('Dev.Source.Diagram '.Dev_Source_Diagram::VERSION.': TAO module visualization utility')->
+        string_option('application', '-a', '--application', 'Visualizer application (graphviz)')->
+        string_option('format',      '-T', '--format',      'Output format')->
+        boolean_option('dump',       '-d', '--dump',        'No output conversion')->
+        string_option('output',      '-o', '--output',      'Output file');
+
+    $this->config->application = 'dot';
+    $this->config->format = 'png';
+    $this->config->output = null;
+    $this->config->dump   = false; 
+
   }
 ///     </body>
 ///   </method>
@@ -272,7 +270,7 @@ class Dev_Source_Diagram_Application extends CLI_Application_AbstractApplication
 ///   <method name="output" access="protected">
 ///     <body>
   protected function output($result) {
-    switch ($application = $this->options['application']) {
+    switch ($application = $this->config->application) {
       case 'dot':
       case 'neato':
       case 'fdp':
@@ -281,8 +279,8 @@ class Dev_Source_Diagram_Application extends CLI_Application_AbstractApplication
         Proc::Pipe(
           Core_Strings::format('%s -T%s %s',
             $application,
-            $this->options['format'],
-            $this->options['output'] ? ' -o '.$this->options['output'] : ''), 'w')->
+            $this->config->format,
+            $this->config->output ? ' -o '.$this->config->output : ''), 'w')->
               write($result)->
               close();
         break;

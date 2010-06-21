@@ -1,12 +1,12 @@
 <?php
-/// <module name="Dev.Source.CreateXML" maintainer="svistunov@techart.ru" version="0.2.0">
+/// <module name="Dev.Source.CreateXML" maintainer="svistunov@techart.ru" version="0.3.0">
 Core::load('CLI.Application', 'IO.FS', 'Dev.Source');
 
 /// <class name="Dev.Source.Dump" stereotype="module">
 ///   <implements interface="Core.ModuleInterface" />
 class Dev_Source_Dump implements Core_ModuleInterface, CLI_RunInterface {
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.3.0';
 ///   </constants>
 
 ///   <protocol name="performing">
@@ -24,8 +24,8 @@ class Dev_Source_Dump implements Core_ModuleInterface, CLI_RunInterface {
 }
 /// </class>
 
-/// <class name="Dev.Source.Dump.Application" extends="CLI.Application.AbstractApplication">
-class Dev_Source_Dump_Application extends CLI_Application_AbstractApplication {
+/// <class name="Dev.Source.Dump.Application" extends="CLI.Application.Base">
+class Dev_Source_Dump_Application extends CLI_Application_Base {
 
 ///   <protocol name="performing">
 
@@ -35,8 +35,8 @@ class Dev_Source_Dump_Application extends CLI_Application_AbstractApplication {
 ///     </args>
 ///     <body>
   public function run(array $argv) {
-    Core::with($this->options['output'] ?
-      IO_FS::File($this->options['output'])->open('w+') :
+    Core::with($this->config->output ?
+      IO_FS::File($this->config->output)->open('w+') :
       IO::stdout())->write(Dev_Source::Library($argv)->xml->SaveXML());
     return 0;
   }
@@ -50,12 +50,11 @@ class Dev_Source_Dump_Application extends CLI_Application_AbstractApplication {
 ///   <method name="setup" access="protected">
 ///     <body>
   protected function setup() {
-    return parent::setup()->
-      usage_text(Core_Strings::format("Dev.Source.Dump %s: TAO module visualization utility\n", Dev_Source_Dump::VERSION))->
-      options(
-        array(
-          array('output',      '-o', '--output',      'string',  null,  'Output file')),
-          array('output'=> null));
+    $this->options->
+      brief('Dev.Source.Dump '.Dev_Source_Dump::VERSION.': TAO module document dump utility')->
+      string_option('output', '-o', '--output', 'Output file');
+
+    $this->config->output = null;
   }
 ///     </body>
 ///   </method>
