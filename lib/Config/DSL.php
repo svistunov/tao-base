@@ -1,5 +1,5 @@
 <?php
-/// <module name="Config.DSL" version="0.2.0" maintainer="timokhin@techart.ru">
+/// <module name="Config.DSL" version="0.2.1" maintainer="timokhin@techart.ru">
 ///   <brief>Модуль построения конфигурационных настроек с помощью DSL</brief>
 Core::load('DSL');
 
@@ -8,14 +8,14 @@ Core::load('DSL');
 ///   <depends supplier="Config.DSL.Builder" stereotype="creates" />
 class Config_DSL implements Core_ModuleInterface {
 ///   <constants>
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
 ///   </constants>
 
 ///   <protocol name="building">
 ///   <brief>Фабричный метод, возвращающий объект класса Config.DSL.Builder</brief>
 ///   <method name="Builder" returns="Config.DSL.Builder" scope="class">
 ///     <body>
-  static public function Builder() { return new Config_DSL_Builder(); }
+  static public function Builder($object = null) { return new Config_DSL_Builder(null, $object); }
 ///     </body>
 ///   </method>
 
@@ -48,8 +48,8 @@ class Config_DSL_Builder extends DSL_Builder {
 ///       <arg name="object" type="stdClass" default="null" brief="объект" />
 ///     </args>
 ///     <body>
-  public function __construct(Config_DSL_Builder $parent = null, stdClass $object = null) {
-    parent::__construct($parent, Core::if_null($object, new stdClass()));
+  public function __construct($parent = null, $object = null) {
+    parent::__construct($parent, is_object($object) ? $object : (is_array($object) ? Core::object($object) : Core::object()));
   }
 ///     </body>
 ///   </method>
@@ -65,6 +65,7 @@ class Config_DSL_Builder extends DSL_Builder {
 ///     </args>
 ///     <body>
   public function load($file) {
+    $config = $this->object;
     ob_start();
     include($file);
     ob_end_clean();
@@ -80,7 +81,9 @@ class Config_DSL_Builder extends DSL_Builder {
 ///     </args>
 ///     <body>
   public function begin($name) {
-    return new Config_DSL_Builder($this, $this->object->$name = new stdClass());
+    return new Config_DSL_Builder($this, 
+      isset($this->object->$name) ? 
+        $this->object->$name : $this->object->$name = new stdClass());
   }
 ///       </body>
 ///     </method>
