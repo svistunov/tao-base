@@ -35,7 +35,7 @@ class CLI_Application_Exception extends CLI_Exception {}
 ///        возможностями:</p>
 ///     <ul>
 ///       <li>хранение информации о настройках приложения в объекте конфигурации;</li>
-///       <li>разбор параметров командной строки и установка соответствующих значений 
+///       <li>разбор параметров командной строки и установка соответствующих значений
 ///           в объекте конфигурации;</li>
 ///       <li>загрузка конфигурационного файла в формате DSL.Config и установка значений
 ///           объекта конфигурации из этого файла;</li>
@@ -56,22 +56,22 @@ class CLI_Application_Exception extends CLI_Exception {}
 ///     </dl>
 ///     <p>Жизненный цикл приложения выглядит следующим образом:</p>
 ///     <ol>
-///       <li>Создание объекта приложения (__construct). Создаются объекты options, log и config 
+///       <li>Создание объекта приложения (__construct). Создаются объекты options, log и config
 ///           со значениями по умолчанию.</li>
 ///       <li>Первоначальная настройка приложения (setup). Метод setup предназначен для настройки
 ///           парсера options и установки значений по умолчанию для объекта config.</li>
 ///       <li>Разбор опций командной строки, запись соответствующих значений в config.</li>
-///       <li>Конфигурирование приложения (configure). Метод configure предназначен для 
-///           окончательной настройки параметров приложения. На момент выполнения метода в 
+///       <li>Конфигурирование приложения (configure). Метод configure предназначен для
+///           окончательной настройки параметров приложения. На момент выполнения метода в
 ///           объекте конфигурации уже присутствуют параметры, указанные в командной строке,
 ///           таким образом, в качестве такого параметра можно получить путь к файлу конфигурации.
 ///           Для подгрузки файла можно использовать вспомогательный метод load_config().</li>
 ///       <li>Инициализация логов.</li>
-///       <li>Выполнение метода show_usage, если установлен параметр конфигурации show_user, или 
-///           вызов метода run($argv), выполняющий основной код приложения. Целочисленный 
-///           результат выполнения метода run() используется в качестве кода завершения 
+///       <li>Выполнение метода show_usage, если установлен параметр конфигурации show_user, или
+///           вызов метода run($argv), выполняющий основной код приложения. Целочисленный
+///           результат выполнения метода run() используется в качестве кода завершения
 ///           приложения.</li>
-///       <li>Завершение приложения (shutdown). Метод предназначен для определения операций, 
+///       <li>Завершение приложения (shutdown). Метод предназначен для определения операций,
 ///           которые должны быть выполнены в случае нормального или аварийного завершения
 ///           приложения.</li>
 ///       <li>Закрытие логов.</li>
@@ -91,16 +91,16 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
 ///       <p>Создает объекты options, log и config.</p>
 ///       <p>Объект options инициализируется опцией -h/--help, которой соответствует
 ///          элемент show_usage в объекте конфигурации config. Обработка опции
-///          выполняется автоматически.</p> 
+///          выполняется автоматически.</p>
 ///       <p>Объект log представляет собой контекст логирования, производный от
 ///          диспетчера Log::logger(), добавляющий атрибут module, содержащий
 ///          имя модуля приложения.</p>
 ///       <p>Объект config по умолчанию содержит два атрибута:</p>
 ///       <dl>
-///         <dt>show_usage</dt>  
+///         <dt>show_usage</dt>
 ///         <dd>признак запроса вывода информации об использовании;</dd>
 ///         <dt>log</dt>
-///          <dd>Ссылка на диспетчер логов Log::logger() для удобства его 
+///          <dd>Ссылка на диспетчер логов Log::logger() для удобства его
 ///              настройки в конфигурационном файле.</dd>
 ///       </dl>
 ///     </details>
@@ -133,19 +133,19 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
 ///         <li>определения списка поддерживаемых опций для парсера
 ///             аргументов командной строки options;</li>
 ///         <li>установки значений параметров по умолчанию в объекте
-///             конфигурации config.</li>  
-///       </ul>      
-///     </details> 
+///             конфигурации config.</li>
+///       </ul>
+///     </details>
 ///     <body>
   protected function setup() {}
 ///     </body>
 ///   </method>
 
 ///   <method name="shutdown" access="protected">
-///     <brief>Завершение работы приложения</brief>    
+///     <brief>Завершение работы приложения</brief>
 ///     <details>
 ///       <p>Метод предназначен для выполнения операций, необходимых при
-///          завершении работы приложения, например, закрытия файлов и 
+///          завершении работы приложения, например, закрытия файлов и
 ///          соединений с базой данных.</p>
 ///       <p>Закрытие логов производится классом приложения автоматически.</p>
 ///     </details>
@@ -159,7 +159,7 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
 ///     <details>
 ///       <p>В отличие от метода setup(), этот метод вызывается после разбора
 ///          командной строки. Метод рекомендуется использовать, в частности,
-///          для подгрузки конфигурационного файла с помощью load_config().</p>  
+///          для подгрузки конфигурационного файла с помощью load_config().</p>
 ///     </details>
 ///     <body>
   protected function configure() {}
@@ -198,9 +198,9 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
       $this->setup();
 
       $this->options->parse($argv, $this->config);
-      
+
       $this->configure();
-      
+
       Log::logger()->init();
 
       $rc =  $this->config->show_usage ? $this->show_usage() : $this->run($argv);
@@ -230,9 +230,9 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
       case 'config':
         return $this->$property;
       default:
-        throw new Core_MissingPropertyException($property);  
+        throw new Core_MissingPropertyException($property);
     }
-  } 
+  }
 ///     </body>
 ///   </method>
 
@@ -245,9 +245,9 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
 ///     <details>
 ///       <p>Свойства объекта доступны только на чтение.</p>
 ///     </details>
-///     <body>  
-  public function __set($property, $value) { 
-    throw new Core_ReadOnlyObjectException($this); 
+///     <body>
+  public function __set($property, $value) {
+    throw new Core_ReadOnlyObjectException($this);
   }
 ///     </body>
 ///   </method>
@@ -296,13 +296,25 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
 ///       <arg name="status" type="int" brief="код завершения" />
 ///     </args>
 ///     <details>
-///       <p>Вызывает пользовательский метод shutdown(), закрывает логи и выходит с указанным кодом 
+///       <p>Вызывает пользовательский метод shutdown(), закрывает логи и выходит с указанным кодом
 ///          завершения.</p>
 ///     </details>
 ///     <body>
   protected function finalize($status) {
     $this->shutdown();
     Log::logger()->close();
+    return $this->exit_wrapper($status);
+  }
+///     </body>
+///   </method>
+
+///   <method name="exit_wrapper" access="protected" returns="int">
+///     <brief>Обертка над оператором exit</brief>
+///     <args>
+///       <arg name="status" type="int" brief="статус завершения" />
+///     </args>
+///     <body>
+  protected function exit_wrapper($status) {
     exit((int) $status);
   }
 ///     </body>
@@ -314,7 +326,7 @@ abstract class CLI_Application_Base implements Core_PropertyAccessInterface {
 ///       <p>Выводимый текст содержит собственно текст описания и список поддерживаемых опций
 ///          командной строки с описанием каждой опции.</p>
 ///     </details>
-///    <body>
+///     <body>
   protected function show_usage() {
     IO::stdout()->write($this->options->usage_text());
     return 0;
