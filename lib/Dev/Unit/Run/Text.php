@@ -279,7 +279,8 @@ class Dev_Unit_Run_Text_Application extends CLI_Application_Base {
       boolean_option('noprefix', '-n', '--no-prefix', 'Don\'t use class prefix');
 
     $this->log->dispatcher->
-      to_stream(IO::stderr());
+      to_stream(IO::stderr())->
+        where('module', '=', Core_Types::module_name_for($this));
 
     $this->config->prefix = 'Test.';
     $this->config->noprefix = false;
