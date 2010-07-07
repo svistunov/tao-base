@@ -8,7 +8,7 @@ Core::load('Dev.Unit', 'CLI', 'CLI.Application');
 class Test_CLI_Application implements Dev_Unit_TestModuleInterface, CLI_RunInterface {
 
 ///   <constants>
-  const VERSION = '0.1.1';
+  const VERSION = '0.2.1';
 ///   </constants>
 
   static protected $app;
@@ -58,8 +58,10 @@ class Test_CLI_Application implements Dev_Unit_TestModuleInterface, CLI_RunInter
 /// </class>
 
 /// <class name="Test.CLI.Application.App" extends="CLI.Application.Base">
-class Test_CLI_Application_App extends CLI_Application_Base implements Core_PropertyAccessInterface {
+class Test_CLI_Application_App extends CLI_Application_Base {
   protected $e;
+  public $calling_methods = array();
+  public $config_path = './test/data/CLI/Application/config.php';
 
 ///   <protocol name="creating">
 
@@ -78,6 +80,8 @@ class Test_CLI_Application_App extends CLI_Application_Base implements Core_Prop
     $this->config->output = null;
     $this->config->dump = false;
 
+    $this->calling_methods[] = array('setup' => array());
+    return $this;
   }
 ///     </body>
 ///   </method>
@@ -86,12 +90,44 @@ class Test_CLI_Application_App extends CLI_Application_Base implements Core_Prop
 
 ///   <protocol name="performing">
 
+///   <method name="shutdown" access="protected">
+///     <body>
+  protected function shutdown() {
+    $this->calling_methods[] = array('shutdown' => array());
+    return $this;
+  }
+///     </body>
+///   </method>
+
+///   <method name="configure" access="protected">
+///     <body>
+  protected function configure() {
+    $this->calling_methods[] = array('configure' => array());
+    $this->load_config($this->config_path);
+    return $this;
+  }
+///     </body>
+///   </method>
+
+///   <method name="exit_wrapper" access="protected">
+///     <args>
+///       <arg name="status" type="int" />
+///     </args>
+///     <body>
+///     <body>
+  protected function exit_wrapper($status) {
+    return $status;
+  }
+///     </body>
+///   </method>
+
 ///   <method name="run" returns="int">
 ///     <args>
 ///       <arg name="argv" type="array" />
 ///     </args>
 ///     <body>
   public function run(array $argv) {
+    $this->calling_methods[] = array('run' => array());
     if ($this->e) throw $this->e;
     return 0;
   }
@@ -107,8 +143,6 @@ class Test_CLI_Application_App extends CLI_Application_Base implements Core_Prop
 ///   </method>
 
 ///   </protocol>
-
-
 }
 /// </class>
 
@@ -117,99 +151,97 @@ class Test_CLI_Application_ApplicationCase extends Dev_Unit_TestCase {
   protected $app;
   protected $argv = array();
   protected $status;
-  private $__stdout__;
-  private $__stderr__;
+  private $out_log;
+
 ///   <protocol name="testing">
 
 ///   <method name="setup" access="protected">
 ///     <body>
   protected function setup() {
-    $this->__stdout__ = IO::stdout();
-    $this->__stderr__ = IO::stderr();
-    IO::stdout(IO_Stream::NamedResourceStream('php://memory', 'wb'));
-    IO::stderr(IO_Stream::NamedResourceStream('php://memory', 'wb'));
+    $this->out_log = IO_Stream::NamedResourceStream('php://memory', 'wb');
     $this->app = Test_CLI_Application::app(new Test_CLI_Application_App());
+    $this->app->log->dispatcher->
+      to_stream($this->out_log)->
+        where('module', '=', Core_Types::module_name_for($this));
   }
 ///     </body>
 ///   </method>
 
-///   <method name="teardown">
+///   <method name="test_calling">
 ///     <body>
-  protected function teardown() {
-    IO::stdout($this->__stdout__);
-    IO::stderr($this->__stderr__);
+  public function test_calling() {
+    $this->argv = array('tao-run');
+    $this->run_cli();
+    $this->assert_equal(
+      $this->app->calling_methods,
+      array(
+        array('setup' => array()),
+        array('configure' => array()),
+        array('run' => array()),
+        array('shutdown' => array())
+      )
+    )->
+      assert_equal($this->status, 0);
   }
 ///     </body>
 ///   </method>
 
-///   <method name="test_usage">
+///   <method name="test_config">
 ///     <body>
-  public function notest_usage() {
-    $this->argv = array('-h');
+  public function test_config() {
+    $this->run_cli();
+    $this->assert_equal(
+      $this->app->config,
+      (object) array(
+        'log' => Log::logger(),
+        'show_usage' => false,
+        'application' => 'dot',
+        'format' => 'svg',
+        'output' => null,
+        'dump' => true
+      )
+    );
+  }
+///     </body>
+///   </method>
+
+///   <method name="test_log">
+///     <body>
+  public function test_log() {
     $this->run_cli();
     $this->
-      assert_equal($this->status, 0)->
-      assert_match(
-          '{Test.CLI.Application\s+'.Test_CLI_Application::VERSION.'\s+'.
-          '-h,\s+--help\s+Shows help message\s+'.
-          '-a,\s+--application\s+Visualizer application \(graphviz\)\s+'.
-          '-T,\s+--format\s+Output format\s+'.
-          '-d,\s+--dump\s+No output conversion\s+'.
-          '-o,\s+--output\s+Output file\s+}',
-        IO::stdout()->load());
+	    assert_match(
+	      "!{$this->app->config_path}!",
+	      $this->out_log->rewind()->load()
+	    );
+  }
+///     </body>
+///   </method>
+
+///   <method name="test_accessing">
+///     <body>
+  public function test_accessing() {
+    $this->asserts->accessing->
+      assert_read_only($this->app, $ro = array(
+        'log' => Log::logger()->context(array(
+          'module' => 'Test.CLI.Application'))
+      ))->
+      assert_exists_only($this->app, $eo = array(
+        'config', 'options'
+      ))->
+      assert_class('CLI_GetOpt_Parser', $this->app->options);
   }
 ///     </body>
 ///   </method>
 
 ///   <method name="test_error">
 ///     <body>
-  public function notest_error() {
+  public function test_error() {
     $this->app->exception(new Core_Exception('Test exception'));
     $this->run_cli();
     $this->
       assert_equal($this->status, -1)->
-      assert_match('{\s*Error:\s+Test\s+exception\s*}', IO::stderr()->load());
-  }
-///     </body>
-///   </method>
-
-///   <method name="test_options">
-///     <body>
-  public function notest_options() {
-    $this->argv = array('-Tdot', '-otmp/a.dot', 'DB.ORM');
-    $this->run_cli();
-    $this->assert_equal($this->status, 0);
-    $this->asserts->iterating->
-      assert_read($this->app->getopt->options, array(
-        0 => (object) array(
-          'name' => 'show_help', 'short' => '-h', 'long' => '--help', 'type' => 'boolean',
-          'value' => true, 'comment' => 'Shows help message'
-          ),
-        1 => (object) array(
-          'name' => 'application', 'short' => '-a', 'long' => '--application', 'type' => 'string',
-          'value' => null, 'comment' => 'Visualizer application (graphviz)'
-          ),
-        2 => (object) array(
-          'name' => 'format', 'short' => '-T', 'long' => '--format', 'type' => 'string',
-          'value' => null, 'comment' => 'Output format'
-          ),
-        3 => (object) array(
-          'name' => 'dump', 'short' => '-d', 'long' => '--dump', 'type' => 'boolean',
-          'value' => true, 'comment' => 'No output conversion'
-          ),
-        4 => (object) array(
-          'name' => 'output', 'short' => '-o', 'long' => '--output', 'type' => 'string',
-          'value' => null, 'comment' => 'Output file'
-          ),
-      ));
-    $this->assert_equal(
-      $this->app->options, array(
-        'show_help' => false,
-        'application' => 'dot',
-        'format' => 'dot',
-        'output' => 'tmp/a.dot',
-        'dump' => false
-      ));
+      assert_match('{Test\s+exception}', $this->out_log->rewind()->load());
   }
 ///     </body>
 ///   </method>
@@ -222,8 +254,6 @@ class Test_CLI_Application_ApplicationCase extends Dev_Unit_TestCase {
 ///     <body>
   protected function run_cli() {
     $this->status = CLI::run_module(array_merge((array) 'Test.CLI.Application' , $this->argv));
-    IO::stdout()->rewind();
-    IO::stderr()->rewind();
   }
 ///     </body>
 ///   </method>
