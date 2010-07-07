@@ -11,7 +11,7 @@ Core::load('IO.FS');
 ///   <depends supplier="Log.UnknownHandlerException" stereotype="throws" />
 ///   <depends supplier="Log.BadMappingException" stereotype="throws" />
 class Log implements Core_ModuleInterface {
-  
+
 ///   <constants>
   const VERSION = '0.1.1';
 ///   </constants>
@@ -20,7 +20,8 @@ class Log implements Core_ModuleInterface {
   static $handlers = array(
     'stream' => 'Log.StreamHandler',
     'file'   => 'Log.FileHandler',
-    'syslog' => 'Log.SyslogHandler' );
+    'syslog' => 'Log.SyslogHandler',
+    'firephp' => 'Log.FirePHP.Handler');
 
   static $default;
 
@@ -78,8 +79,8 @@ class Log implements Core_ModuleInterface {
   }
 ///     </body>
 ///   </method>
-  
-///   </protocol>  
+
+///   </protocol>
 }
 /// </class>
 
@@ -99,7 +100,7 @@ class Log_UnknownHandlerException extends Log_Exception {
 ///       <arg name="name" type="string" />
 ///     </args>
 ///     <body>
-  public function __construct($name) { 
+  public function __construct($name) {
     $this->name = $name;
     parent::__construct("Unknown handler: $name");
   }
@@ -121,7 +122,7 @@ class Log_BadMappingException extends Log_Exception {
 ///   <method name="__construct">
 ///     <args>
 ///       <arg name="name" type="string" />
-///       <arg name="class" type="string" />  
+///       <arg name="class" type="string" />
 ///     </args>
 ///     <body>
   public function __construct($name, $class) {
@@ -148,17 +149,17 @@ abstract class Log_Level {
 ///   </constants>
 
   static private $names = array(
-    self::DEBUG    => 'D', 
-    self::INFO     => 'I', 
-    self::WARNING  => 'W', 
-    self::ERROR    => 'E', 
+    self::DEBUG    => 'D',
+    self::INFO     => 'I',
+    self::WARNING  => 'W',
+    self::ERROR    => 'E',
     self::CRITICAL => 'C');
 
 ///   <protocol name="supporting">
 
 ///   <method name="normalize" returns="int" scope="class">
 ///     <args>
-///       <arg name="level" type="int" />  
+///       <arg name="level" type="int" />
 ///     </args>
 ///     <body>
   static public function normalize($level) {
@@ -210,9 +211,9 @@ class Log_HandlerBuilder implements Core_CallInterface {
 ///   <method name="__call" returns="mixed">
 ///     <args>
 ///       <arg name="method" type="string" />
-///       <arg name="args" type="array" />  
+///       <arg name="args" type="array" />
 ///     </args>
-///     <body>  
+///     <body>
   public function __call($method, $args) {
     call_user_func_array(array($this->handler, $method), $args);
     return $this;
@@ -226,9 +227,9 @@ class Log_HandlerBuilder implements Core_CallInterface {
 
 ///   <method name="__get" returns="mixed">
 ///     <args>
-///       <arg name="property" type="string" />  
+///       <arg name="property" type="string" />
 ///     </args>
-///     <body>  
+///     <body>
   public function __get($property) {
     if ($property === 'end') return $this->dispatcher;
     else return null;
@@ -237,7 +238,7 @@ class Log_HandlerBuilder implements Core_CallInterface {
 ///   </method>
 
 ///   </protocol>
-}  
+}
 /// </class>
 /// <aggregation>
 ///   <source class="Log.HandlerBuilder" stereotype="builder" multiplicity="1" />
@@ -251,8 +252,8 @@ class Log_HandlerBuilder implements Core_CallInterface {
 /// <class name="Log.Context">
 ///   <implements interface="Core.PropertyAccessInterface" />
 ///   <depends supplier="Log.Level" stereotype="uses" />
-class Log_Context implements Core_PropertyAccessInterface {
-  
+class Log_Context implements Core_PropertyAccessInterface, Core_EqualityInterface {
+
   protected $parent;
   protected $values = array();
 
@@ -280,9 +281,9 @@ class Log_Context implements Core_PropertyAccessInterface {
 ///     <args>
 ///       <arg name="parent" type="Log.Context" />
 ///     </args>
-///     <body>  
-  public function parent(Log_Context $parent) { 
-    $this->parent = $parent; 
+///     <body>
+  public function parent(Log_Context $parent) {
+    $this->parent = $parent;
     return $this;
   }
 ///     </body>
@@ -293,8 +294,9 @@ class Log_Context implements Core_PropertyAccessInterface {
 ///       <arg name="values" type="array" />
 ///     </args>
 ///     <body>
-  public function with(array $values) { 
-    $this->values = array_merge($this->values, $values); 
+  public function with(array $values) {
+    $this->values = array_merge($this->values, $values);
+    return $this;
   }
 ///     </body>
 ///   </method>
@@ -318,7 +320,7 @@ class Log_Context implements Core_PropertyAccessInterface {
 
 ///   <method name="emit" returns="Log.Context">
 ///     <args>
-///       <arg name="message" type="object" />  
+///       <arg name="message" type="object" />
 ///     </args>
 ///     <body>
   protected function emit($message) {
@@ -398,7 +400,7 @@ class Log_Context implements Core_PropertyAccessInterface {
 ///   </protocol>
 
 ///   <protocol name="accessing" interface="Core.PropertyAccessInterface">
-  
+
 ///   <method name="__get" returns="mixed">
 ///     <args>
 ///       <arg name="property" type="string" />
@@ -406,14 +408,14 @@ class Log_Context implements Core_PropertyAccessInterface {
 ///     <body>
   public function __get($property) {
     switch ($property) {
-      case 'parent':
-        return $this->parent;
+      case 'parent': case 'values':
+        return $this->$property;
       case 'dispatcher':
         return $this->get_dispatcher();
       default:
-        throw new Core_MissingPropertyException($property);  
+        throw new Core_MissingPropertyException($property);
     }
-  } 
+  }
 ///     </body>
 ///   </method>
 
@@ -422,9 +424,9 @@ class Log_Context implements Core_PropertyAccessInterface {
 ///       <arg name="property" type="string" />
 ///       <arg name="value" />
 ///     </args>
-///     <body>  
-  public function __set($property, $value) { 
-    throw new Core_ReadOnlyObjectException($this); 
+///     <body>
+  public function __set($property, $value) {
+    throw new Core_ReadOnlyObjectException($this);
   }
 ///     </body>
 ///   </method>
@@ -436,7 +438,7 @@ class Log_Context implements Core_PropertyAccessInterface {
 ///     <body>
   public function __isset($property) {
     switch ($property) {
-      case 'parent':
+      case 'parent': case 'values':
         return isset($this->$property);
       case 'dispatcher':
         return true;
@@ -457,9 +459,22 @@ class Log_Context implements Core_PropertyAccessInterface {
 ///     </body>
 ///   </method>
 
- 
-  
 ///   </protocol>
+
+///   <protocol name="quering">
+///   <method name="equals" returns="boolean">
+///     <args>
+///       <arg name="to" />
+///     </args>
+///     <body>
+  public function equals($to) {
+    return ($to instanceof self) &&
+      Core::equals($this->values, $to->values) &&
+      Core::equals($this->parent, $to->parent);
+  }
+///     </body>
+///   </method>
+///</protocol>
 
 
 }
@@ -472,8 +487,8 @@ class Log_Context implements Core_PropertyAccessInterface {
 /// <class name="Log.Dispatcher" extends="Log.Context">
 ///   <implements interface="Core.CallInterface" />
 ///   <depends supplier="Log.HandlerBuilder" stereotype="creates" />
-class Log_Dispatcher 
-  extends Log_Context 
+class Log_Dispatcher
+  extends Log_Context
   implements Core_CallInterface {
 
   protected $handlers = array();
@@ -494,11 +509,11 @@ class Log_Dispatcher
 ///     <args>
 
 ///     </args>
-///     <body>  
+///     <body>
   public function handler(Log_Handler $handler) {
     $this->handlers[] = $handler;
     return $this;
-  }  
+  }
 ///     </body>
 ///   </method>
 
@@ -531,7 +546,7 @@ class Log_Dispatcher
 ///       <arg name="message" type="object" />
 ///     </args>
 ///     <body>
-  public function emit($message) {
+  protected function emit($message) {
     parent::emit($message);
     foreach ($this->handlers as $h) $h->emit_if_acceptable($message);
     return $this;
@@ -541,8 +556,8 @@ class Log_Dispatcher
 
 ///   <method name="init" return="Log.Dispatcher">
 ///     <body>
-  public function init() { 
-    foreach ($this->handlers as $h) $h->init(); 
+  public function init() {
+    foreach ($this->handlers as $h) $h->init();
     return $this;
   }
 ///     </body>
@@ -565,12 +580,25 @@ class Log_Dispatcher
 
 /// <class name="Log.Handler" stereotype="abstract">
 ///   <depends supplier="Log.Level" stereotype="uses" />
-abstract class Log_Handler {
+///   <implements interface="Core.PropertyAccessInterface" />
+abstract class Log_Handler implements Core_PropertyAccessInterface {
 
   protected $filter = array();
 
   protected $format = '{time}:{level}:{body}';
   protected $time_format = '%Y-%m-%d %H:%M:%S';
+
+///   <protocol name="creating">
+
+///   <method name="__construct">
+///     <body>
+  public function __construct() {
+
+  }
+///     </body>
+///   </method>
+
+///   </protocol>
 
 
 ///   <protocol name="configuring">
@@ -615,7 +643,7 @@ abstract class Log_Handler {
 
 
 ///   </protocol>
-  
+
 
 ///   <protocol name="performing">
 
@@ -636,10 +664,10 @@ abstract class Log_Handler {
 ///       <arg name="message" type="object" />
 ///     </args>
 ///     <body>
-  abstract public function emit($message); 
+  abstract public function emit($message);
 ///     </body>
 ///   </method>
-  
+
 ///   <method name="init" returns="Log.Handler">
 ///     <body>
   public function init() { return $this; }
@@ -671,7 +699,7 @@ abstract class Log_Handler {
       switch ($k) {
         case 'time':
           $s[] = '{time}';
-          $r[] = $this->format_time($v); 
+          $r[] = $this->format_time($v);
           break;
         case 'body':
           $s[] = '{body}';
@@ -685,8 +713,8 @@ abstract class Log_Handler {
           $s[] = "{{$k}}";
           $r[] = (string) $v;
           break;
-      } 
-    } 
+      }
+    }
     return str_replace($s, $r, $this->format);
   }
 ///     </body>
@@ -705,7 +733,7 @@ abstract class Log_Handler {
 
 ///   <method name="format_time" returns="string" access="protected">
 ///     <args>
-///       <arg name="ts" type="int" />  
+///       <arg name="ts" type="int" />
 ///     </args>
 ///     <body>
   protected function format_time($ts) { return strftime($this->time_format, $ts); }
@@ -714,7 +742,7 @@ abstract class Log_Handler {
 
 ///   <method name="is_acceptable" returns="boolean" access="protected">
 ///     <args>
-///       <arg name="object" />  
+///       <arg name="object" />
 ///     </args>
 ///     <body>
   protected function is_acceptable($object) {
@@ -723,7 +751,7 @@ abstract class Log_Handler {
       list($attr, $op, $val) = $c;
       if (!isset($object->$attr)) return false;
       switch ($op) {
-        case '=': 
+        case '=':
           if ($object->$attr == $val) $passed++;
           break;
         case '<':
@@ -739,7 +767,7 @@ abstract class Log_Handler {
           if ($object->$attr >= $val) $passed++;
           break;
         case '~':
-          foreach ((array) $val as $v) 
+          foreach ((array) $val as $v)
             if ($r = preg_match($v, (string) $object->$attr)) break;
           if ($r) $passed++;
           break;
@@ -757,13 +785,90 @@ abstract class Log_Handler {
 ///   </method>
 
 ///   </protocol>
+
+///   <protocol name="accessing">
+
+///   <method name="__get" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __get($property) {
+    switch ($property) {
+      case 'format':
+      case 'time_format':
+      case 'filter':
+        return $this->$property;
+      default:
+        throw new Core_MissingPropertyException($property);
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="__set" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///       <arg name="value" />
+///     </args>
+///     <body>
+  public function __set($property, $value) {
+    switch ($property) {
+      case 'format':
+      case 'time_format':
+        return $this->$property($value);
+      case 'filter':
+        throw new Core_ReadOnlyPropertyException($property);
+      default:
+        throw new Core_MissingPropertyException($property);
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="__isset" returns="boolean">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __isset($property) {
+    switch ($property) {
+      case 'format': case 'time_format': case 'filter':
+        return isset($this->$property);
+      default:
+        return false;
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="__unset">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __unset($property) {
+    switch ($property) {
+      case 'format':
+      case 'time_format':
+        return $this->$property(null);
+      case 'filter':
+        throw new Core_ReadOnlyPropertyException($property);
+      default:
+        throw new Core_MissingPropertyException($property);
+    }
+  }
+///     </body>
+///   </method>
+
+///   </protocol>
 }
 /// </class>
 
 
 /// <class name="Log.StreamHandler" extends="Log.Handler">
 class Log_StreamHandler extends Log_Handler {
-  
+
   protected $stream;
 
 ///   <protocol name="creating">
@@ -773,14 +878,14 @@ class Log_StreamHandler extends Log_Handler {
 ///       <arg name="stream" type="IO.Stream.AbstractStream" />
 ///     </args>
 ///     <body>
-  public function __construct(IO_Stream_AbstractStream $stream) { 
-    $this->stream = $stream; 
+  public function __construct(IO_Stream_AbstractStream $stream) {
+    $this->stream = $stream;
   }
 ///     </body>
 ///   </method>
-  
+
 ///   </protocol>
-  
+
 ///   <protocol name="performing">
 
 ///   <method name="emit" returns="Log.StreamHandler">
@@ -789,7 +894,7 @@ class Log_StreamHandler extends Log_Handler {
 ///     </args>
 ///     <body>
   public function emit($message) {
-    $this->stream->write($this->format_message($message)."\n"); 
+    $this->stream->write($this->format_message($message)."\n");
     return $this;
   }
 ///     </body>
@@ -817,7 +922,7 @@ class Log_FileHandler extends Log_Handler {
 ///     </args>
 ///     <body>
   public function __construct($path) {
-    $this->path = $path; 
+    $this->path = $path;
   }
 ///     </body>
 ///   </method>
@@ -828,7 +933,7 @@ class Log_FileHandler extends Log_Handler {
 
 ///   <method name="init" returns="Log.FileHandler">
 ///     <body>
-  public function init() { 
+  public function init() {
     $this->stream = IO_FS::FileStream($this->path, 'a');
     return $this;
   }
@@ -848,7 +953,7 @@ class Log_FileHandler extends Log_Handler {
 ///     <body>
   public function emit($message) {
     if ($this->stream)
-      $this->stream->write($this->format_message($message)."\n"); 
+      $this->stream->write($this->format_message($message)."\n");
     return $this;
   }
 ///     </body>
@@ -864,7 +969,8 @@ class Log_FileHandler extends Log_Handler {
 /// </composition>
 
 /// <class name="Log.SyslogHandler" extends="Log.Handler">
-class Log_SyslogHandler extends Log_Handler {
+///   <implements interface="Core.PropertyAccessInterface" />
+class Log_SyslogHandler extends Log_Handler implements Core_PropertyAccessInterface {
 
   protected $id;
   protected $options;
@@ -891,13 +997,13 @@ class Log_SyslogHandler extends Log_Handler {
 ///   </protocol>
 
 ///   <protocol name="configuring">
-  
+
 ///   <method name="identified_as" returns="Log.SyslogHandler">
 ///     <args>
 ///       <arg name="id" type="string" />
 ///     </args>
 ///     <body>
-  public function identified_as($id) { 
+  public function identified_as($id) {
     $this->id = $id;
     return $this;
   }
@@ -934,7 +1040,7 @@ class Log_SyslogHandler extends Log_Handler {
 
 ///   <method name="init" returns="Log.FileHandler">
 ///     <body>
-  public function init() { 
+  public function init() {
     $this->is_opened = openlog($this->id, $this->options, $this->facility);
     return $this;
   }
@@ -960,9 +1066,72 @@ class Log_SyslogHandler extends Log_Handler {
       Log_Level::ERROR    => LOG_ERR,
       Log_Level::CRITICAL => LOG_CRIT );
 
-    if (isset($priorities[$l = Log_Level::normalize($message->level)])) 
+    if (isset($priorities[$l = Log_Level::normalize($message->level)]))
       syslog($priorities[$l], $this->format_body($message->body));
     return $this;
+  }
+///     </body>
+///   </method>
+
+///   </protocol>
+
+///   <protocol name="accessing">
+
+///   <method name="__get" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __get($property) {
+    switch ($property) {
+      case 'facility':
+      case 'options':
+      case 'id':
+        return $this->$property;
+      default:
+        throw new Core_ReadOnlyObjectException($this);
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="__set" returns="mixed">
+///     <args>
+///       <arg name="property" type="string" />
+///       <arg name="value" />
+///     </args>
+///     <body>
+  public function __set($property, $value) {
+    throw new Core_ReadOnlyObjectException($this);
+  }
+///     </body>
+///   </method>
+
+///   <method name="__isset" returns="boolean">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __isset($property) {
+    switch ($property) {
+      case 'facility':
+      case 'options':
+      case 'id':
+        return isset($this->$property);
+      default:
+        return false;
+    }
+  }
+///     </body>
+///   </method>
+
+///   <method name="__unset">
+///     <args>
+///       <arg name="property" type="string" />
+///     </args>
+///     <body>
+  public function __unset($property) {
+    throw new Core_ReadOnlyObjectException($this);
   }
 ///     </body>
 ///   </method>
