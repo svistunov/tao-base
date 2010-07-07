@@ -12,7 +12,7 @@
 ///   <details>
 ///     <p>Построение приложения выполняется с помощью объектов класса WS.DSL.Builder. Класс реализует
 ///        Core.CallInterface, и делает это следующим образом.</p>
-///     <p>Существует набор стандартных вызовов, каждый их которых приводит к созданию соответствующиего слоя 
+///     <p>Существует набор стандартных вызовов, каждый их которых приводит к созданию соответствующиего слоя
 ///        middleware или терминального обработчика.</p>
 ///     <p>Набор вызовов для создания middleware:</p>
 ///     <dl>
@@ -32,15 +32,15 @@
 ///     <dl>
 ///       <dt>application_dispatcher</dt><dd>WS.Rest.Dispatcher — диспетчер REST-приложений.</dd>
 ///     </dl>
-///     <p>Вызов метода, соответствующего middleware-компоненту, сохраняет информацию о его параметрах и 
-///        возвращает ссылку на builder. Таким образом, вызывая эти методы последовательно, можно построить необходимую 
-///        цепочку обработчиков. Параметры метода должны соответствовать набору параметров конструктора сервиса, без 
+///     <p>Вызов метода, соответствующего middleware-компоненту, сохраняет информацию о его параметрах и
+///        возвращает ссылку на builder. Таким образом, вызывая эти методы последовательно, можно построить необходимую
+///        цепочку обработчиков. Параметры метода должны соответствовать набору параметров конструктора сервиса, без
 ///        первого аргумента, который всегда следующий сервис в цепочке.</p>
-///     <p>Вызов метода, соответствующего терминальному обработчику, выполняет построение всей цепочки middleware-компонентов, 
+///     <p>Вызов метода, соответствующего терминальному обработчику, выполняет построение всей цепочки middleware-компонентов,
 ///        определенной ранее, завершает ее соответствующим терминальным обработчиком и возвращает получившуюся цепочку. Параметры
 ///        метода соответствуют параметрам обработчика.</p>
 ///     <p>Если необходимо указать свой собственный терминальный обработчик, это можно сделать с помощью вызова handler().</p>
-///     <p>Таким образом, следующий код создаст приложение, читающее конфигурацию из файла, поключащееся к базе данных и 
+///     <p>Таким образом, следующий код создаст приложение, читающее конфигурацию из файла, поключащееся к базе данных и
 ///        используюшее пользовательский обработчик для всего остального.</p>
 ///     <code>
 ///       $application = WS_DSL::application()->
@@ -49,7 +49,7 @@
 ///         application(new App_WS_ApplicationService());
 ///     </code>
 ///     <p>Набор поддерживаемых методов можно расширять. Для этого необходимо воспользоваться механизмом
-///        конфигурирования модуля. Компоненты middleware регистрируются с помощью опции middleware, 
+///        конфигурирования модуля. Компоненты middleware регистрируются с помощью опции middleware,
 ///        терминальные обработчики — с помощью опции handlers.</p>
 ///     <code>
 ///     Core::configure('WS.DSL', array(
@@ -72,13 +72,14 @@ class WS_DSL implements Core_ModuleInterface {
 
 ///   <constants>
   const VERSION = '0.3.1';
-  
+
   const PREFIX  = 'WS.Middleware';
   const SUFFIX  = 'Service';
 ///   </constants>
 
   static public $middleware = array(
     'environment'     => '.Environment.',
+    'firephp'         => '.FirePHP.',
     'config'          => '.Config.',
     'db'              => '.DB.',
     'orm'             => '.ORM.',
@@ -89,12 +90,12 @@ class WS_DSL implements Core_ModuleInterface {
     'auth_session'    => 'WS.Auth.Session.',
     'auth_basic'      => 'WS.Auth.Basic.',
     'auth_opensocial' => 'WS.Auth.OpenSocial.');
-  
+
   static public $handlers = array(
     'application_dispatcher' => 'WS.REST.Dispatcher');
 
 ///   <protocol name="creating">
-  
+
 ///   <method name="initialize" scope="class">
 ///     <brief>Выполняет инициализацию модуля</brief>
 ///     <args>
@@ -103,19 +104,19 @@ class WS_DSL implements Core_ModuleInterface {
 ///     <body>
   static public function initialize(array $options = array()) {
 
-    if (isset($options['middleware']) && is_array($options['middleware'])) 
+    if (isset($options['middleware']) && is_array($options['middleware']))
       self::$middleware = array_merge(self::$middleware, $options['middleware']);
-    
-    if (isset($options['handlers']) && is_array($options['handlers'])) 
-      self::$handlers= array_merge(self::$handlers, $options['handlers']);    
-  }  
+
+    if (isset($options['handlers']) && is_array($options['handlers']))
+      self::$handlers= array_merge(self::$handlers, $options['handlers']);
+  }
 ///     </body>
 ///   </method>
-  
+
 ///   </protocol>
-  
+
 ///   <protocol name="building">
-  
+
 ///   <method name="application" returns="WS.DSL.Builder" scope="class">
 ///     <brief>Создает объект класса WS.DSL.Builder</brief>
 ///     <body>
@@ -129,7 +130,7 @@ class WS_DSL implements Core_ModuleInterface {
   static public function application() { return new WS_DSL_Builder(); }
 ///     </body>
 ///   </method>
-  
+
 ///   </protocol>
 }
 /// </class>
@@ -139,11 +140,11 @@ class WS_DSL implements Core_ModuleInterface {
 ///   <implements interface="Core.CallInterface" />
 ///   <brief>Диспетчер динамических вызовов</brief>
 class WS_DSL_Builder implements Core_CallInterface {
-  
+
   protected $middleware = array();
 
 ///   <protocol name="calling" type="Core.CallInterface">
- 
+
 ///   <method name="__call" returns="mixed">
 ///     <brief>Создает терминальный обратчик или сохраняет информацию о middleware в очереди</brief>
 ///     <args>
@@ -156,9 +157,9 @@ class WS_DSL_Builder implements Core_CallInterface {
   }
 ///     </body>
 ///   </method>
-  
+
 ///   </protocol>
-  
+
 ///   <protocol name="building">
 
 ///   <method name="handler" returns="WS.ServiceInterface">
@@ -169,10 +170,10 @@ class WS_DSL_Builder implements Core_CallInterface {
   public function handler(WS_ServiceInterface $app) { return $this->build_middleware($app); }
 ///     </body>
 ///   </method>
-  
+
 ///   </protocol>
-    
-  
+
+
 ///   <protocol name="supporting">
 
 ///   <method name="add_middleware" returns="boolean" access="protected">
@@ -191,11 +192,11 @@ class WS_DSL_Builder implements Core_CallInterface {
   }
 ///     </body>
 ///   </method>
-  
+
 ///   <method name="make_handler" access="protected">
 ///     <brief>Создает терминальный обработчик</brief>
 ///     <details>
-///       <p>Если в очереди вызово присутствуют middleware-компоненты — создает экземпляры в порядке, 
+///       <p>Если в очереди вызово присутствуют middleware-компоненты — создает экземпляры в порядке,
 ///          обратном порядку определения.</p>
 ///     </details>
 ///     <args>
@@ -211,7 +212,7 @@ class WS_DSL_Builder implements Core_CallInterface {
   }
 ///     </body>
 ///   </method>
-  
+
 ///   <method name="build_middleware" returns="WS.ServiceInterface" access="protected">
 ///     <brief>Строит цепочку middleware-компонент</brief>
 ///     <args>
@@ -235,12 +236,12 @@ class WS_DSL_Builder implements Core_CallInterface {
 ///       <arg name="class" type="string" />
 ///     </args>
 ///     <body>
-  protected function load_module_for($class) { 
-    Core::load(substr($class, 0, strrpos(str_replace('..', '.', $class), '.'))); 
+  protected function load_module_for($class) {
+    Core::load(substr($class, 0, strrpos(str_replace('..', '.', $class), '.')));
   }
 ///     </body>
 ///   </method>
-  
+
 ///   <method name="complete_name" returns="string" access="protected">
 ///     <brief>Выполняет развертывание имени компонента</brief>
 ///     <args>
