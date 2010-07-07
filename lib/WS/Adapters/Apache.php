@@ -34,10 +34,10 @@ class WS_Adapters_Apache_Adapter implements WS_AdapterInterface {
     Core_Arrays::deep_merge_update_inplace($_POST, $this->current_uploads());
 
     return Net_HTTP::Request(
-      ($_SERVER['HTTPS'] == 'on' ? 'https://' : 'http://').
+      ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https://' : 'http://').
        $_SERVER['HTTP_HOST'].
        $_SERVER['REQUEST_URI'], array('REMOTE_ADDR' => $_SERVER['REMOTE_ADDR']))->
-    method($_POST['_method'] ? $_POST['_method'] : $_SERVER['REQUEST_METHOD'])->
+    method((isset($_POST['_method']) && $_POST['_method']) ? $_POST['_method'] : $_SERVER['REQUEST_METHOD'])->
     headers(apache_request_headers());
   }
 ///     </body>
