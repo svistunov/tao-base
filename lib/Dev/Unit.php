@@ -996,13 +996,13 @@ abstract class Dev_Unit_AssertBundle {
 ///     </args>
 ///     <body>
     protected function assert_same($a, $b, $message = null) {
-      $a = str_replace(' ', '', str_replace("\n", '', $a));
-      $b = str_replace(' ', '', str_replace("\n", '', $b));
-      if (!Core::equals($a, $b))
+      $a_replace = str_replace(' ', '', str_replace("\n", '', $a));
+      $b_replace = str_replace(' ', '', str_replace("\n", '', $b));
+      if (!Core::equals($a_replace, $b_replace))
         throw new Dev_Unit_FailureException(
           $message ?
             $message :
-            sprintf('failed: %s != %s', $this->stringify($a), $this->stringify($b)));
+            sprintf('failed: %s !~ %s', $this->stringify($a), $this->stringify($b)));
       return $this;
     }
 ///     </body>
