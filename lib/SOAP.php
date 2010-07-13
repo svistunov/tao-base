@@ -1,10 +1,10 @@
 <?php
-/// <module name="SOAP" maintainer="svistunov@techart.ru" version="0.1.0">
+/// <module name="Soap" maintainer="svistunov@techart.ru" version="0.1.0">
 Core::load('XML');
 
-/// <class name="SOAP" stereotype="module">
+/// <class name="Soap" stereotype="module">
 ///   <implements interface="Core.ModuleInterface" />
-class SOAP implements Core_ModuleInterface {
+class Soap implements Core_ModuleInterface {
 ///   <constants>
   const VERSION = '0.1.0';
 ///   </constants>
@@ -18,7 +18,15 @@ class SOAP implements Core_ModuleInterface {
 ///     </args>
 ///     <body>
   static public function Client($wsdl, $options = array()) {
-    return new SOAP_Client($wsdl, $options);
+    if(($http = parse_url(getenv('http_proxy'))) && !isset($options['proxy_host'])) {
+      $options = array_merge($options, array(
+        'proxy_host'     => $http['host'],
+        'proxy_port'     => $http['port'],
+        'proxy_login'    => $http['user'],
+        'proxy_password' => $http['pass']
+      ));
+    }
+    return new Soap_Client($wsdl, $options);
   }
 ///     </body>
 ///   </method>
@@ -26,7 +34,7 @@ class SOAP implements Core_ModuleInterface {
 ///   <method name="XmlFixer">
 ///     <body>
   static public function XmlFixer() {
-    return new SOAP_XmlFixer();
+    return new Soap_XmlFixer();
   }
 ///     </body>
 ///   </method>
@@ -35,8 +43,8 @@ class SOAP implements Core_ModuleInterface {
 }
 /// </class>
 
-/// <class name="SOAP.Client" extends="SoapClient">
-class SOAP_Client extends SoapClient {
+/// <class name="Soap.Client" extends="SoapClient">
+class Soap_Client extends SoapClient {
   protected $last_request;
   protected $last_args;
 
@@ -50,8 +58,8 @@ class SOAP_Client extends SoapClient {
 ///       <arg name="version" type="int" />
 ///     </args>
 ///     <body>
-  public function __doRequest($request, $location, $action, $version) {
-    $this->last_request = SOAP::XmlFixer()->
+  public function __doRequest($request, $location, $version) {
+    $this->last_request = Soap::XmlFixer()->
       fix_xml($request, $this->last_args);
     return parent::__doRequest($this->last_request,
       $location, $action, (int) $version);
@@ -59,7 +67,7 @@ class SOAP_Client extends SoapClient {
 ///     </body>
 ///   </method>
 
-///   <method name="__sopaCall">
+///   <method name="__soapCall">
 ///     <args>
 ///       <arg name="function_name" type="string" />
 ///       <arg name="arguments" type="array" />
@@ -83,8 +91,8 @@ class SOAP_Client extends SoapClient {
 }
 /// </class>
 
-/// <class name="SOAP.XmlFixer">
-class SOAP_XmlFixer {
+/// <class name="Soap.XmlFixer">
+class Soap_XmlFixer {
 
 ///   <protocol name="creating">
 
@@ -123,27 +131,6 @@ class SOAP_XmlFixer {
 ///     </body>
 ///   </method>
 
-///   <method name="fix_xml_nodes" access="private">
-///     <args>
-///       <arg name="node_list" type="DOMNodeList" />
-///       <arg name="objects" type="array" />
-///       <arg name="xpath" type="DOMXpath" />
-///     </args>
-///     <body>
-  private function fix_xml_nodes(DOMNodeList $node_list, array $objects, DOMXPath $xpath) {
-    if ($node_list->length != sizeof($objects))
-      $node_list = $node_list->item(0)->childNodes;
-    if ($node_list->length == sizeof($objects)) {
-      $i = 0;
-      foreach ($objects as $object) {
-        $this->fix_xml_node($node_list->item($i), $object, $xpath);
-        $i++;
-      }
-    }
-  }
-///     </body>
-///   </method>
-
 ///   <method name="fix_xml_node" access="private">
 ///     <args>
 ///       <arg name="node" type="DOMNode" />
@@ -152,6 +139,7 @@ class SOAP_XmlFixer {
 ///     </args>
 ///     <body>
   private function fix_xml_node(DOMNode $node, $object, DOMXPath $xpath) {
+  	if ($object instanceof SoapVar) $object = $object->enc_value;
     if (version_compare(PHP_VERSION, '5.2.7', '<') && is_array($object))
       $this->add_xsi_type($node, $object);
     if (version_compare(PHP_VERSION, '5.2.3', '<') && !isset($object))
@@ -161,18 +149,22 @@ class SOAP_XmlFixer {
     if (true && $node->hasAttribute('xsi:type'))
       $this->redeclare_xsi_type_namespace_definition($node);
 
-    if (is_array($object)) {
-      foreach ($object as $var_name => $var_value) {
-        $node_list = $xpath->query("*[local-name() = '" . $var_name . "']", $node);
-        if (is_array($var_value))
-          $this->fix_xml_nodes($node_list, $var_value, $xpath);
-        else if ($node_list->length == 1)
-          $this->fix_xml_node($node_list->item(0), $var_value, $xpath);
-      }
-    }
+    $this->deep($node, $object, $xpath);
+
   }
 ///     </body>
 ///   </method>
+
+  protected function deep(DOMNode $node, $object, DOMXPath $xpath) {
+    if (is_array($object)) {
+      foreach ($object as $var_name => $var_value) {
+        if (!is_string($var_name)) return $this->deep($node, $var_value, $xpath);
+        $node_list = $xpath->query("*[local-name() = '" . $var_name . "']", $node);
+          for ($i = 0; $i < $node_list->length; $i++)
+            $this->fix_xml_node($node_list->item($i), $var_value, $xpath);
+      }
+    }
+  }
 
 ///   <method name="add_xsi_type" access="private">
 ///     <args>
