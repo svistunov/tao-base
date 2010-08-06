@@ -1,12 +1,12 @@
 <?php
-/// <module name="Dev.Unit.Assert.Accessing" maintainer="timokhin@techart.ru" version="0.2.0">
+/// <module name="Dev.Unit.Assert.Accessing" maintainer="timokhin@techart.ru" version="0.2.3">
 
 /// <class name="Dev.Unit.Assert.Accessing">
 ///   <implements interface="Dev.Unit.AssertBundleModuleInterface" />
 class Dev_Unit_Assert_Accessing implements Dev_Unit_AssertBundleModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.2';
+  const VERSION = '0.2.3';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -239,7 +239,7 @@ class Dev_Unit_Assert_Accessing_Bundle extends Dev_Unit_AssertBundle {
     public function assert_missing($object, $attrs = 'undefined') {
       foreach ((array) $attrs as $attr) {
         if (isset($object->$attr) !== false)
-          throw new Dev_Unit_FailureException("failed: missing exist Object->$attr");
+          throw new Dev_Unit_FailureException("failed: missing property exists Object->$attr");
 
         $this->set_trap();
         try {
