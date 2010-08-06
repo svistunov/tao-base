@@ -1,5 +1,5 @@
 <?php
-/// <module name="Net.HTTP" version="0.2.3" maintainer="timokhin@techart.ru">
+/// <module name="Net.HTTP" version="0.2.4" maintainer="timokhin@techart.ru">
 ///   <brief>Объектное представления запроса и отклика HTTP-протокола</brief>
 Core::load('IO.FS', 'MIME', 'Time');
 
@@ -16,7 +16,7 @@ interface Net_HTTP_SessionInterface {}
 class Net_HTTP implements Core_ModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.3';
+  const VERSION = '0.2.4';
 
   const GET    = 1;
   const PUT    = 2;
@@ -1078,6 +1078,18 @@ class Net_HTTP_Request
 ///     </body>
 ///   </method>
 
+///   <method name="query_parameters" returns="Net.HTTP.Request">
+///     <args>
+///       <arg name="parameters" type="array" />
+///     </args>
+///     <body>
+  public function query_parameters(array $parameters) {
+    foreach ($parameters as $k => $v) $this->query[$k] = $v;
+    return $this;
+  }
+///     </body>
+///   </method>
+
 ///   <method name="session" returns="Net.HTTP.Request">
 ///     <brief>Устанавливает объект сессии</brief>
 ///     <args>
@@ -1122,7 +1134,7 @@ class Net_HTTP_Request
 ///     </details>
 ///     <body>
   public function method($method) {
-    switch (strtolower($method)) {
+    switch (is_string($method) ? strtolower($method) : $method) {
       case 'get':
       case Net_HTTP::GET:
         $this->method = Net_HTTP::GET;
