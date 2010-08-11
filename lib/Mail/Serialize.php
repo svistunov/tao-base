@@ -1,5 +1,5 @@
 <?php
-/// <module name="Mail.Serialize" version="0.2.2" maintainer="timokhin@techart.ru">
+/// <module name="Mail.Serialize" version="0.2.3" maintainer="timokhin@techart.ru">
 ///     <brief>Модуль для кодирования и декодирования письма</brief>
 Core::load('MIME', 'MIME.Encode', 'MIME.Decode', 'Mail.Message');
 
@@ -10,7 +10,7 @@ class Mail_Serialize implements Core_ModuleInterface {
 
 ///   <constants>
   const MODULE  = 'Mail.Serialize';
-  const VERSION = '0.2.2';
+  const VERSION = '0.2.3';
 ///   </constants>
 
 ///   <protocol name="building">
@@ -141,7 +141,9 @@ class Mail_Serialize_Encoder {
 
       if ($msg->epilogue != '') $this->write($msg->epilogue);
     } else {
-      if ($msg->body instanceof IO_FS_File) {
+      if ($msg->body instanceof IO_FS_File || $msg->body instanceof IO_Stream_ResourceStream) {
+        $this->write(chunk_split(base64_encode($msg->body->load())));
+/*      if ($msg->body instanceof IO_FS_File) {
         foreach (
           $this->encoder_for($msg)->
             from_stream($msg->body->open()) as $line)
@@ -150,7 +152,7 @@ class Mail_Serialize_Encoder {
       } elseif ($msg->body instanceof IO_Stream_AbstractStream) {
         foreach (
           $this->encoder_for($msg)->from_stream($msg->body) as $line)
-            $this->write($line);
+          $this->write($line); */
       } else {
         $this->write($this->encoder_for($msg)->encode($msg->body));
       }
