@@ -1,5 +1,5 @@
 <?php
-/// <module name="Net.Agents.HTTP" version="0.2.1" maintainer="timokhin@techart.ru">
+/// <module name="Net.Agents.HTTP" version="0.2.2" maintainer="timokhin@techart.ru">
 
 Core::load('Net.HTTP');
 
@@ -8,7 +8,7 @@ Core::load('Net.HTTP');
 class Net_Agents_HTTP implements Core_ConfigurableModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.1';
+  const VERSION = '0.2.2';
 ///   </constants>
 
   static protected $options = array(
@@ -288,6 +288,7 @@ class Net_Agents_HTTP_Agent implements Net_HTTP_AgentInterface, Core_PropertyAcc
     $this->info = curl_getinfo($id);
     curl_close($id);
 
+    $result = preg_replace('{[^\r\n]*Connection established[^\r\n]*\r\n\r\n}i', '', $result, 1);
     return $result === false ? null : Net_HTTP_Response::from_string($result);
   }
 ///     </body>
