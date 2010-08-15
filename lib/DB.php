@@ -1,5 +1,5 @@
 <?php
-/// <module name="DB" version="0.2.2" maintainer="timokhin@techart.ru">
+/// <module name="DB" version="0.2.3" maintainer="timokhin@techart.ru">
 ///   <brief>Модуль предоставляет набор классов для работы с БД</brief>
 Core::load('Object', 'DB.Adapter');
 
@@ -9,7 +9,7 @@ Core::load('Object', 'DB.Adapter');
 class DB implements Core_ConfigurableModuleInterface {
 
 ///   <constants>
-  const VERSION = '0.2.2';
+  const VERSION = '0.2.3';
   const PLACEHOLDER_REGEXP = ':([a-zA-Z_][a-zA-Z_0-9]*)';
 ///   </constants>
 
@@ -476,6 +476,19 @@ class DB_Connection implements Core_PropertyAccessInterface {
 ///     </body>
 ///   </method>
 
+///   <method name="query" returns="DB.Cursor">
+///   <brief>Выполняет SQL-запрос, возвращая курсор для получения результатов</brief>
+///     <args>
+///       <arg name="sql" brief="SQL-запрос" />
+///       <arg name="parms" default="array()" brief="Параметры SQL-запроса" />
+///     </args>
+///     <body>
+  public function query($sql, $parms = array()) {
+    return $this->prepare($sql)->bind($parms)->execute();
+  }
+///     </body>
+///   </method>
+
 ///   </protocol>
 
 ///   <protocol name="quering">
@@ -871,6 +884,18 @@ class DB_Cursor
     }
     while ($row = $this->fetch()) $result[] = $row;
     return $result;
+  }
+///     </body>
+///   </method>
+
+///   <method name="fetch_value" returns="mixed">
+///     <body>
+  public function fetch_value() {
+    if ($this->adapter && $row = $this->adapter->fetch()) {
+      $this->close();
+      return current($row);
+    } else
+      return null;
   }
 ///     </body>
 ///   </method>
